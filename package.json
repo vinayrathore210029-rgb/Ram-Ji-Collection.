@@ -1,0 +1,18 @@
+{
+  "name": "ram-ji-collection",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/admin",
+    "apps/api",
+    "packages/types"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "concurrently \"npm run dev --workspace=@ramjicollection/api\" \"npm run dev --workspace=@ramjicollection/web\" \"npm run dev --workspace=@ramjicollection/admin\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}

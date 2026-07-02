@@ -1,0 +1,221 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum Gender {
+  MEN
+  WOMEN
+  UNISEX
+  KIDS
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum BannerType {
+  HERO
+  PROMO
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         Role           @default(CUSTOMER)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  addresses    Address[]
+  orders       Order[]
+  cart         Cart[]
+  wishlist     Wishlist[]
+  reviews      Review[]
+  notifications Notification[]
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  imageUrl  String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id           String         @id @default(uuid())
+  name         String
+  description  String
+  brand        String
+  categoryId   String
+  category     Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  gender       Gender         @default(UNISEX)
+  price        Float
+  discount     Float          @default(0) // percentage discount
+  finalPrice   Float
+  stock        Int            @default(0)
+  sku          String         @unique
+  sizes        String[]       // e.g. ["S", "M", "L", "XL"]
+  colors       String[]       // e.g. ["Black", "White", "Navy"]
+  material     String?
+  featured     Boolean        @default(false)
+  trending     Boolean        @default(false)
+  newArrival   Boolean        @default(false)
+  bestSeller   Boolean        @default(false)
+  rating       Float          @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  images       ProductImage[]
+  orderItems   OrderItem[]
+  cartItems    Cart[]
+  wishlistItems Wishlist[]
+  reviews      Review[]
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Address {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           String   @default("HOME") // e.g. HOME, WORK
+  street         String
+  city           String
+  state          String
+  postalCode     String
+  country        String   @default("India")
+  isDefault      Boolean  @default(false)
+  shippingOrders Order[]  @relation("ShippingAddress")
+  billingOrders  Order[]  @relation("BillingAddress")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  size      String
+  color     String
+  createdAt DateTime @default(now())
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status            OrderStatus   @default(PENDING)
+  totalAmount       Float
+  discountAmount    Float         @default(0)
+  payableAmount     Float
+  couponCode        String?
+  shippingAddressId String
+  shippingAddress   Address       @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId  String
+  billingAddress    Address       @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  paymentStatus     PaymentStatus @default(PENDING)
+  paymentId         String?       // Razorpay payment ID after payment success
+  orderIdRazorpay   String?       // Razorpay order ID generated before payment
+  items             OrderItem[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  price     Float    // snapshotted price at order time
+  size      String
+  color     String
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rating    Int      @default(5)
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id                 String   @id @default(uuid())
+  code               String   @unique
+  discountPercent    Float
+  active             Boolean  @default(true)
+  expiryDate         DateTime
+  minPurchaseAmount  Float    @default(0)
+  createdAt          DateTime @default(now())
+}
+
+model Banner {
+  id        String     @id @default(uuid())
+  title     String
+  subtitle  String?
+  imageUrl  String
+  linkUrl   String?
+  active    Boolean    @default(true)
+  type      BannerType @default(HERO)
+  createdAt DateTime   @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
