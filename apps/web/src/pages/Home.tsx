@@ -58,8 +58,8 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight uppercase"
             >
-              Elevate Your <br />
-              <span className="text-brand-gold font-light">Daily Wardrobe</span>
+              Redefine Your <br />
+              <span className="text-brand-gold font-light">Personal Style</span>
             </motion.h1>
 
             <motion.p 
