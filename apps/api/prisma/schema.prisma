@@ -7,6 +7,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ==========================================
+// Enums
+// ==========================================
+
 enum Role {
   CUSTOMER
   ADMIN
@@ -20,19 +24,42 @@ enum Gender {
 }
 
 enum OrderStatus {
-  PENDING
-  CONFIRMED
-  PACKED
-  SHIPPED
-  DELIVERED
-  CANCELLED
-  RETURNED
+  PENDING         // Order created, awaiting payment authorization
+  CONFIRMED       // Payment received, inventory reserved
+  PACKED          // Packed at warehouse
+  SHIPPED         // Handed over to courier
+  DELIVERED       // Received by customer
+  CANCELLED       // Cancelled before shipping
+  RETURN_REQUESTED // Customer initiated return
+  RETURNED        // Return processed and closed
 }
 
 enum PaymentStatus {
   PENDING
-  PAID
+  AUTHORIZED
+  SUCCESSFUL
   FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NETBANKING
+  WALLET
+  COD
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
 }
 
 enum BannerType {
@@ -40,143 +67,330 @@ enum BannerType {
   PROMO
 }
 
+// ==========================================
+// 1. User & Authentication
+// ==========================================
+
 model User {
-  id           String         @id @default(uuid())
-  email        String         @unique
+  id           String           @id @default(uuid())
+  email        String           @unique
   passwordHash String
   firstName    String
   lastName     String
   phone        String?
-  role         Role           @default(CUSTOMER)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  role         Role             @default(CUSTOMER)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  
   addresses    Address[]
   orders       Order[]
-  cart         Cart[]
-  wishlist     Wishlist[]
+  cartItems    CartItem[]
+  wishlist     WishlistItem[]
   reviews      Review[]
   notifications Notification[]
+  events       AnalyticsEvent[]
+
+  @@index([email])
 }
+
+// Mutable user addresses (modified or deleted by user)
+model Address {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String   @default("HOME") // HOME, WORK, etc.
+  street     String
+  city       String
+  state      String
+  postalCode String
+  country    String   @default("India")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ==========================================
+// 2. Product Catalog (Clothing Specialized)
+// ==========================================
 
 model Category {
   id        String    @id @default(uuid())
   name      String    @unique
   slug      String    @unique
-  imageUrl  String?
+  imageUrl  String?   // Public Cloudflare R2 image URL
   products  Product[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  @@index([slug])
 }
 
 model Product {
-  id           String         @id @default(uuid())
-  name         String
-  description  String
-  brand        String
-  categoryId   String
-  category     Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  gender       Gender         @default(UNISEX)
-  price        Float
-  discount     Float          @default(0) // percentage discount
-  finalPrice   Float
-  stock        Int            @default(0)
-  sku          String         @unique
-  sizes        String[]       // e.g. ["S", "M", "L", "XL"]
-  colors       String[]       // e.g. ["Black", "White", "Navy"]
-  material     String?
-  featured     Boolean        @default(false)
-  trending     Boolean        @default(false)
-  newArrival   Boolean        @default(false)
-  bestSeller   Boolean        @default(false)
-  rating       Float          @default(0)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  images       ProductImage[]
-  orderItems   OrderItem[]
-  cartItems    Cart[]
-  wishlistItems Wishlist[]
-  reviews      Review[]
+  id          String         @id @default(uuid())
+  name        String
+  description String
+  brand       String
+  material    String?
+  gender      Gender         @default(UNISEX)
+  categoryId  String
+  category    Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  
+  // Pricing defaults (Can be overridden by Variant base prices if needed)
+  price       Decimal        @db.Decimal(10, 2)
+  discount    Decimal        @default(0) @db.Decimal(5, 2) // percentage discount
+  finalPrice  Decimal        @db.Decimal(10, 2)
+  
+  featured    Boolean        @default(false)
+  trending    Boolean        @default(false)
+  newArrival  Boolean        @default(false)
+  bestSeller  Boolean        @default(false)
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  variants    ProductVariant[]
+  images      ProductImage[]
+  reviews     Review[]
+  wishlisted  WishlistItem[]
+
+  @@index([categoryId])
+  @@index([name])
 }
 
+// Tracks size/color variants with unique SKUs & stock counts
+model ProductVariant {
+  id         String         @id @default(uuid())
+  productId  String
+  product    Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku        String         @unique
+  size       String         // e.g., "S", "M", "L", "XL"
+  color      String         // e.g., "Navy Blue", "Crimson Red"
+  stock      Int            @default(0)
+  
+  // Optional price override for larger sizes/premium fabrics
+  priceOverride Decimal?    @db.Decimal(10, 2)
+  isActive   Boolean        @default(true)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  images     ProductImage[] // Associate specific variant with its own colorway images
+
+  @@index([productId])
+  @@index([sku])
+}
+
+// Stores public CDN asset URLs pointing to files in Cloudflare R2
 model ProductImage {
-  id        String   @id @default(uuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  url       String
-  isPrimary Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id         String          @id @default(uuid())
+  productId  String
+  product    Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  // Optional: Nullable link to specific color variants (so selecting Red shows red shirts)
+  variantId  String?
+  variant    ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  
+  url        String          // Public CDN URL (e.g., https://cdn.ramjicollection.com/uploads/...)
+  isPrimary  Boolean         @default(false)
+  displayOrder Int           @default(0)
+  createdAt  DateTime        @default(now())
+
+  @@index([productId])
+  @@index([variantId])
 }
 
-model Address {
-  id             String   @id @default(uuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type           String   @default("HOME") // e.g. HOME, WORK
-  street         String
-  city           String
-  state          String
-  postalCode     String
-  country        String   @default("India")
-  isDefault      Boolean  @default(false)
-  shippingOrders Order[]  @relation("ShippingAddress")
-  billingOrders  Order[]  @relation("BillingAddress")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+// ==========================================
+// 3. Cart & Wishlist
+// ==========================================
+
+model CartItem {
+  id        String         @id @default(uuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int            @default(1)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([userId, variantId])
+  @@index([userId])
 }
 
-model Cart {
+model WishlistItem {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity  Int      @default(1)
-  size      String
-  color     String
   createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
 }
 
-model Wishlist {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+// ==========================================
+// 4. Coupon & Discounts
+// ==========================================
+
+model Coupon {
+  id               String       @id @default(uuid())
+  code             String       @unique
+  discountType     DiscountType @default(PERCENTAGE)
+  value            Decimal      @db.Decimal(10, 2) // Discount percent (e.g. 15.00) or flat amount
+  maxDiscount      Decimal?     @db.Decimal(10, 2) // Maximum cap for percentage discount
+  minPurchaseValue Decimal      @default(0) @db.Decimal(10, 2)
+  startsAt         DateTime
+  expiresAt        DateTime
+  usageLimit       Int?         // Total times coupon can be used across entire store
+  usageLimitPerUser Int         @default(1) // Times a single customer can apply it
+  usedCount        Int          @default(0)
+  active           Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  
+  orders           Order[]
+
+  @@index([code])
 }
+
+// ==========================================
+// 5. Orders & Checkout (Audit Safe)
+// ==========================================
 
 model Order {
-  id                String        @id @default(uuid())
-  userId            String
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status            OrderStatus   @default(PENDING)
-  totalAmount       Float
-  discountAmount    Float         @default(0)
-  payableAmount     Float
-  couponCode        String?
-  shippingAddressId String
-  shippingAddress   Address       @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddressId  String
-  billingAddress    Address       @relation("BillingAddress", fields: [billingAddressId], references: [id])
-  paymentStatus     PaymentStatus @default(PENDING)
-  paymentId         String?       // Razorpay payment ID after payment success
-  orderIdRazorpay   String?       // Razorpay order ID generated before payment
-  items             OrderItem[]
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  id             String          @id @default(uuid())
+  orderNumber    String          @unique // Readable reference (e.g., RJC-2026-000001)
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status         OrderStatus     @default(PENDING)
+  
+  // Auditable pricing values
+  totalAmount    Decimal         @db.Decimal(10, 2) // Sum of order items at checkout list prices
+  discountAmount Decimal         @default(0) @db.Decimal(10, 2) // Promo/Coupon discount applied
+  shippingFee    Decimal         @default(0) @db.Decimal(10, 2)
+  payableAmount  Decimal         @db.Decimal(10, 2) // Final amount charged
+  
+  couponId       String?
+  coupon         Coupon?         @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  
+  // Snapshot addresses to maintain historical records if customer changes or deletes profile addresses
+  shippingAddressId String       @unique
+  shippingAddress   OrderAddress @relation("OrderShipping", fields: [shippingAddressId], references: [id])
+  billingAddressId  String       @unique
+  billingAddress    OrderAddress @relation("OrderBilling", fields: [billingAddressId], references: [id])
+  
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  
+  items          OrderItem[]
+  transactions   PaymentTransaction[]
+  returns        ReturnRequest[]
+
+  @@index([userId])
+  @@index([orderNumber])
+}
+
+// Immutable historical address details saved at checkout
+model OrderAddress {
+  id         String   @id @default(uuid())
+  street     String
+  city       String
+  state      String
+  postalCode String
+  country    String
+  phone      String
+  
+  shippingFor Order?  @relation("OrderShipping")
+  billingFor  Order?  @relation("OrderBilling")
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity  Int
-  price     Float    // snapshotted price at order time
-  size      String
-  color     String
+  id         String         @id @default(uuid())
+  orderId    String
+  order      Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId  String
+  variant    ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  
+  quantity   Int
+  // Price snaps at checkout (prevents audit values changing if base product prices change later)
+  price      Decimal        @db.Decimal(10, 2)
+  
+  // Redundant meta snapshots to keep orders legible even if variant details are later soft-deleted
+  productName String
+  variantSku  String
+  size        String
+  color       String
+
+  returnItems ReturnItem[]
+
+  @@index([orderId])
+  @@index([variantId])
 }
+
+// ==========================================
+// 6. Payments & Transactions
+// ==========================================
+
+model PaymentTransaction {
+  id               String        @id @default(uuid())
+  orderId          String
+  order            Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  gateway          String        @default("RAZORPAY") // RAZORPAY, COD, stripe, etc.
+  gatewayOrderId   String?       @unique // Razorpay generated Order ID
+  gatewayPaymentId String?       @unique // Razorpay signature Payment ID
+  gatewaySignature String?
+  method           PaymentMethod @default(CARD)
+  status           PaymentStatus @default(PENDING)
+  amount           Decimal       @db.Decimal(10, 2)
+  errorMessage     String?
+  metadata         Json?         // Audit trail dump from gateway callback
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([orderId])
+  @@index([gatewayOrderId])
+}
+
+// ==========================================
+// 7. Returns & Refunds
+// ==========================================
+
+model ReturnRequest {
+  id          String       @id @default(uuid())
+  orderId     String
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  status      ReturnStatus @default(PENDING)
+  reason      String
+  refundAmount Decimal     @db.Decimal(10, 2)
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  items       ReturnItem[]
+
+  @@index([orderId])
+}
+
+model ReturnItem {
+  id              String        @id @default(uuid())
+  returnRequestId String
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  orderItemId     String
+  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  quantity        Int           // quantity returned
+  receivedStock   Boolean       @default(false) // whether returned stock was re-added to variant inventory
+
+  @@index([returnRequestId])
+  @@index([orderItemId])
+}
+
+// ==========================================
+// 8. Reviews & Ratings
+// ==========================================
 
 model Review {
   id        String   @id @default(uuid())
@@ -184,31 +398,38 @@ model Review {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  rating    Int      @default(5)
+  rating    Int      @default(5) // 1 to 5 scale
   comment   String?
+  
+  // Optional: Cloudflare R2 review image urls (e.g. buyer showing the clothes)
+  imageUrls String[]
+  
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([userId])
 }
 
-model Coupon {
-  id                 String   @id @default(uuid())
-  code               String   @unique
-  discountPercent    Float
-  active             Boolean  @default(true)
-  expiryDate         DateTime
-  minPurchaseAmount  Float    @default(0)
-  createdAt          DateTime @default(now())
-}
+// ==========================================
+// 9. Marketing & Banners
+// ==========================================
 
 model Banner {
   id        String     @id @default(uuid())
   title     String
   subtitle  String?
-  imageUrl  String
+  imageUrl  String     // Public Cloudflare R2 banner image URL
   linkUrl   String?
   active    Boolean    @default(true)
   type      BannerType @default(HERO)
   createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
+
+// ==========================================
+// 10. Notifications
+// ==========================================
 
 model Notification {
   id        String   @id @default(uuid())
@@ -218,4 +439,23 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ==========================================
+// 11. Event Logging & Analytics (Dashboard Support)
+// ==========================================
+
+model AnalyticsEvent {
+  id         String   @id @default(uuid())
+  eventType  String   // e.g. "view_product", "add_to_cart", "purchase"
+  userId     String?  // nullable for guest events
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  metadata   Json?    // e.g. { productId: "123", device: "Mobile", browser: "Chrome" }
+  createdAt  DateTime @default(now())
+
+  @@index([eventType])
+  @@index([userId])
+  @@index([createdAt])
 }
