@@ -9,20 +9,20 @@ import { Gender } from '@prisma/client';
 const productCreateSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
-  brand: z.string().min(1),
+  brand: z.string().optional().nullable(),
   categoryId: z.string().uuid(),
-  gender: z.nativeEnum(Gender),
+  gender: z.nativeEnum(Gender).optional().default(Gender.UNISEX),
   price: z.number().positive(),
-  discount: z.number().nonnegative().max(100).default(0),
-  stock: z.number().int().nonnegative().default(0),
-  sku: z.string().min(1),
-  sizes: z.array(z.string()).min(1),
-  colors: z.array(z.string()).min(1),
-  material: z.string().optional(),
-  featured: z.boolean().default(false),
-  trending: z.boolean().default(false),
-  newArrival: z.boolean().default(false),
-  bestSeller: z.boolean().default(false)
+  discount: z.number().nonnegative().max(100).optional().default(0),
+  stock: z.number().int().nonnegative().optional().default(0),
+  sku: z.string().optional(),
+  sizes: z.array(z.string()).optional().default([]),
+  colors: z.array(z.string()).optional().default([]),
+  material: z.string().optional().nullable(),
+  featured: z.boolean().optional().default(false),
+  trending: z.boolean().optional().default(false),
+  newArrival: z.boolean().optional().default(false),
+  bestSeller: z.boolean().optional().default(false)
 });
 
 export async function getProducts(req: Request, res: Response, next: NextFunction) {
@@ -175,12 +175,28 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
     const bodyData = typeof req.body.data === 'string' ? JSON.parse(req.body.data) : req.body;
     const data = productCreateSchema.parse(bodyData);
 
-    const existingSku = await prisma.product.findUnique({
-      where: { sku: data.sku }
-    });
-
-    if (existingSku) {
-      throw new BadRequestError(`Product with SKU ${data.sku} already exists`);
+    // Generate SKU automatically if not supplied
+    let sku = data.sku;
+    if (!sku) {
+      const count = await prisma.product.count();
+      let isUnique = false;
+      let checkNum = count + 1;
+      while (!isUnique) {
+        sku = `RJC-${String(checkNum).padStart(4, '0')}`;
+        const match = await prisma.product.findUnique({ where: { sku } });
+        if (!match) {
+          isUnique = true;
+        } else {
+          checkNum++;
+        }
+      }
+    } else {
+      const existingSku = await prisma.product.findUnique({
+        where: { sku }
+      });
+      if (existingSku) {
+        throw new BadRequestError(`Product with SKU ${sku} already exists`);
+      }
     }
 
     // Calculate final price after discount
@@ -202,14 +218,14 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
         data: {
           name: data.name,
           description: data.description,
-          brand: data.brand,
+          brand: data.brand || null,
           categoryId: data.categoryId,
           gender: data.gender,
           price: data.price,
           discount: data.discount,
           finalPrice,
           stock: data.stock,
-          sku: data.sku,
+          sku,
           sizes: data.sizes,
           colors: data.colors,
           material: data.material || null,

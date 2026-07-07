@@ -108,23 +108,19 @@ export default function Products() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (sizes.length === 0 || colors.length === 0) {
-      alert('Please check at least one size and one color');
-      return;
-    }
 
     setSubmitting(true);
     try {
       const payload = {
         name,
         description,
-        brand,
+        brand: brand || undefined,
         categoryId,
         gender,
         price: parseFloat(price),
-        discount: parseFloat(discount),
+        discount: parseFloat(discount) || 0,
         stock: parseInt(stock, 10),
-        sku,
+        sku: sku || undefined,
         sizes,
         colors,
         material: material || undefined,
@@ -296,7 +292,7 @@ export default function Products() {
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-gray-400 uppercase">Brand</span>
                 <input 
-                  type="text" required value={brand} onChange={(e) => setBrand(e.target.value)}
+                  type="text" value={brand} onChange={(e) => setBrand(e.target.value)}
                   placeholder="Ram Ji Collection"
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-brand-gold text-brand-dark font-medium"
                 />
@@ -327,14 +323,7 @@ export default function Products() {
                 </select>
               </div>
 
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-gray-400 uppercase">SKU (Unique Identifier)</span>
-                <input 
-                  type="text" required value={sku} onChange={(e) => setSku(e.target.value.toUpperCase())}
-                  placeholder="RJC-SH-001"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-brand-gold text-brand-dark font-medium"
-                />
-              </div>
+
 
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-gray-400 uppercase">Base Price (INR)</span>
@@ -348,7 +337,7 @@ export default function Products() {
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-gray-400 uppercase">Discount Percentage (%)</span>
                 <input 
-                  type="number" required value={discount} onChange={(e) => setDiscount(e.target.value)}
+                  type="number" value={discount} onChange={(e) => setDiscount(e.target.value)}
                   placeholder="10"
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-brand-gold text-brand-dark font-medium"
                 />
