@@ -1,0 +1,11 @@
+{
+  "name": "test-root",
+  "private": true,
+  "workspaces": [
+    "apps/admin",
+    "packages/types"
+  ],
+  "overrides": {
+    "@ramjicollection/types": "*"
+  }
+}

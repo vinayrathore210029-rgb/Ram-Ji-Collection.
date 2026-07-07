@@ -1,0 +1,7 @@
+{
+  "name": "@ramjicollection/admin",
+  "version": "1.0.0",
+  "dependencies": {
+    "@ramjicollection/types": "workspace:*"
+  }
+}
