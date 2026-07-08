@@ -213,6 +213,7 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
     }
 
     // Create product and its image records in transaction
+    const finalSku = sku as string;
     const product = await prisma.$transaction(async (tx) => {
       const p = await tx.product.create({
         data: {
@@ -225,7 +226,7 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
           discount: data.discount,
           finalPrice,
           stock: data.stock,
-          sku,
+          sku: finalSku,
           sizes: data.sizes,
           colors: data.colors,
           material: data.material || null,
