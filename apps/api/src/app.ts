@@ -29,8 +29,8 @@ app.use(helmet({
 }));
 
 const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
-  process.env.ADMIN_URL || 'http://localhost:5174'
+  (process.env.FRONTEND_URL || 'http://localhost:5173').trim(),
+  (process.env.ADMIN_URL || 'http://localhost:5174').trim()
 ];
 
 app.use(cors({
