@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { IndianRupee, ShoppingCart, UserCheck, Package, ShoppingBag } from 'lucide-react';
@@ -78,7 +79,7 @@ export default function Dashboard() {
         </div>
 
         {/* Total Orders */}
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4">
+        <Link to="/orders" className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4 hover:border-brand-gold/40 hover:shadow-md transition-all duration-200 cursor-pointer">
           <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
             <ShoppingCart className="w-6 h-6" />
           </div>
@@ -86,10 +87,10 @@ export default function Dashboard() {
             <span className="text-[10px] text-gray-400 uppercase font-extrabold tracking-wider">Total Orders</span>
             <h3 className="text-lg font-black text-brand-dark mt-0.5">{stats?.totalOrders || 0}</h3>
           </div>
-        </div>
+        </Link>
 
         {/* Total Customers */}
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4">
+        <Link to="/customers" className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4 hover:border-brand-gold/40 hover:shadow-md transition-all duration-200 cursor-pointer">
           <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
             <UserCheck className="w-6 h-6" />
           </div>
@@ -97,10 +98,10 @@ export default function Dashboard() {
             <span className="text-[10px] text-gray-400 uppercase font-extrabold tracking-wider">Customers</span>
             <h3 className="text-lg font-black text-brand-dark mt-0.5">{stats?.totalCustomers || 0}</h3>
           </div>
-        </div>
+        </Link>
 
         {/* Total Products */}
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4">
+        <Link to="/products" className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4 hover:border-brand-gold/40 hover:shadow-md transition-all duration-200 cursor-pointer">
           <div className="w-12 h-12 bg-orange-50 text-brand-gold rounded-full flex items-center justify-center flex-shrink-0">
             <Package className="w-6 h-6" />
           </div>
@@ -108,7 +109,7 @@ export default function Dashboard() {
             <span className="text-[10px] text-gray-400 uppercase font-extrabold tracking-wider">Products</span>
             <h3 className="text-lg font-black text-brand-dark mt-0.5">{stats?.totalProducts || 0}</h3>
           </div>
-        </div>
+        </Link>
 
       </div>
 
