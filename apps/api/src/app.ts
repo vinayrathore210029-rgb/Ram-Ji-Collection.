@@ -16,6 +16,7 @@ import cartRoutes from './routes/cart.routes';
 import wishlistRoutes from './routes/wishlist.routes';
 import orderRoutes from './routes/order.routes';
 import adminRoutes from './routes/admin.routes';
+import whatsappRoutes from './routes/whatsapp.routes';
 
 // Import error handler
 import { errorHandler } from './middlewares/errors';
@@ -63,6 +64,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Root route check
 app.get('/health', (req, res) => {
