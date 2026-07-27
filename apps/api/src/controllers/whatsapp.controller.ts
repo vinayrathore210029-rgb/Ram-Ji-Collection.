@@ -104,3 +104,39 @@ export const handleWebhook = async (req: Request, res: Response) => {
     return res.status(500).send('Internal Server Error');
   }
 };
+
+/**
+ * Direct test endpoint to trigger sending a WhatsApp message and return exact Meta response
+ */
+export const testSendWhatsApp = async (req: Request, res: Response) => {
+  const to = (req.query.to as string) || '917723020933';
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || '1242579422267973';
+
+  const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: to,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: `Welcome to Ram Ji Collection! 🛍️✨\n\nThank you for reaching out! Explore our website:\nhttps://ram-ji-collection-web-one.vercel.app/`
+        }
+      })
+    });
+
+    const data = await response.json();
+    return res.status(response.status).json({ success: response.ok, status: response.status, data });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
