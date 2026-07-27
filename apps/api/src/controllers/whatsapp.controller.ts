@@ -1,6 +1,46 @@
 import { Request, Response } from 'express';
 
 /**
+ * Send an automated text response back to the sender via Meta Graph API
+ */
+async function sendAutoReply(toPhoneNumber: string, textBody: string) {
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || '1242579422267973';
+
+  if (!token || token === 'your_whatsapp_access_token') {
+    console.warn('[WhatsApp AutoReply] Missing WHATSAPP_ACCESS_TOKEN in .env');
+    return;
+  }
+
+  const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: toPhoneNumber,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: textBody
+        }
+      })
+    });
+
+    const data = await response.json();
+    console.log('[WhatsApp AutoReply Sent]:', data);
+  } catch (error) {
+    console.error('[WhatsApp AutoReply Error]:', error);
+  }
+}
+
+/**
  * Verification endpoint for Meta WhatsApp Webhook setup (GET request)
  */
 export const verifyWebhook = (req: Request, res: Response) => {
@@ -26,7 +66,7 @@ export const verifyWebhook = (req: Request, res: Response) => {
 /**
  * Event handler endpoint for Meta WhatsApp Webhook (POST request)
  */
-export const handleWebhook = (req: Request, res: Response) => {
+export const handleWebhook = async (req: Request, res: Response) => {
   try {
     const body = req.body;
 
@@ -35,7 +75,18 @@ export const handleWebhook = (req: Request, res: Response) => {
         entry.changes?.forEach((change: any) => {
           const value = change.value;
           if (value?.messages) {
-            console.log('Received WhatsApp Message:', JSON.stringify(value.messages, null, 2));
+            value.messages.forEach((msg: any) => {
+              const from = msg.from; // Sender's phone number
+              const messageText = msg.text?.body || '';
+
+              console.log(`[WhatsApp Incoming] From: ${from}, Text: "${messageText}"`);
+
+              // Auto-reply message for testing
+              const replyText = `Welcome to Ram Ji Collection! 🛍️✨\n\nThank you for messaging us. Check out our latest fashion collections at:\nhttps://ram-ji-collection-web-one.vercel.app/\n\nHow can we help you today?`;
+
+              // Send auto reply asynchronously
+              sendAutoReply(from, replyText);
+            });
           }
           if (value?.statuses) {
             console.log('WhatsApp Message Status Update:', JSON.stringify(value.statuses, null, 2));
