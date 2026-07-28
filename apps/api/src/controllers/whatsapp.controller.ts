@@ -110,10 +110,32 @@ export const handleWebhook = async (req: Request, res: Response) => {
  */
 export const testSendWhatsApp = async (req: Request, res: Response) => {
   const to = (req.query.to as string) || '917723020933';
+  const mode = req.query.mode as string;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || '1242579422267973';
 
   const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+
+  const payload = mode === 'text' ? {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: to,
+    type: 'text',
+    text: {
+      preview_url: false,
+      body: `Welcome to Ram Ji Collection! 🛍️✨\n\nThank you for reaching out! Explore our website:\nhttps://ram-ji-collection-web-one.vercel.app/`
+    }
+  } : {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'template',
+    template: {
+      name: 'hello_world',
+      language: {
+        code: 'en_US'
+      }
+    }
+  };
 
   try {
     const response = await fetch(url, {
@@ -122,16 +144,7 @@ export const testSendWhatsApp = async (req: Request, res: Response) => {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        recipient_type: 'individual',
-        to: to,
-        type: 'text',
-        text: {
-          preview_url: false,
-          body: `Welcome to Ram Ji Collection! 🛍️✨\n\nThank you for reaching out! Explore our website:\nhttps://ram-ji-collection-web-one.vercel.app/`
-        }
-      })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
