@@ -94,11 +94,11 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     // WhatsApp Monthly Free Conversations Quota
     // Meta Cloud API provides 1,000 free conversations per month
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const monthlyOrdersCount = await prisma.order.count({
+    const loggedWhatsAppCount = await prisma.whatsAppLog.count({
       where: { createdAt: { gte: startOfMonth } }
     });
-    // Estimate 2 WhatsApp notifications per order (Order Confirmed + Shipped) plus test messages
-    const whatsappUsed = Math.min(1000, monthlyOrdersCount * 2 + 5);
+    // Real-time count of logged messages, minimum 5 for initial tests
+    const whatsappUsed = Math.min(1000, Math.max(5, loggedWhatsAppCount));
     const whatsappLimit = 1000;
     const whatsappRemaining = Math.max(0, whatsappLimit - whatsappUsed);
 

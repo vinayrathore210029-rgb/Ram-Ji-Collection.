@@ -219,3 +219,12 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model WhatsAppLog {
+  id        String   @id @default(uuid())
+  direction String   @default("OUTBOUND")
+  from      String?
+  to        String?
+  message   String?
+  createdAt DateTime @default(now())
+}
