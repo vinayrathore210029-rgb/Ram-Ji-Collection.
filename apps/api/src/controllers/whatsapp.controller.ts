@@ -114,15 +114,6 @@ export const handleWebhook = async (req: Request, res: Response) => {
               if (value?.statuses && Array.isArray(value.statuses)) {
                 for (const statusObj of value.statuses) {
                   console.log('WhatsApp Message Status Update:', statusObj.status);
-                  if (statusObj.status === 'sent' || statusObj.status === 'delivered') {
-                    await prisma.whatsAppLog.create({
-                      data: {
-                        direction: 'OUTBOUND',
-                        to: statusObj.recipient_id || 'customer',
-                        message: `Status: ${statusObj.status}`
-                      }
-                    }).catch(err => console.error('Failed to log WhatsApp status update:', err));
-                  }
                 }
               }
             }
