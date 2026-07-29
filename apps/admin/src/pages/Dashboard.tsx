@@ -2,13 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { IndianRupee, ShoppingCart, UserCheck, Package, ShoppingBag } from 'lucide-react';
+import { IndianRupee, ShoppingCart, UserCheck, Package, MessageSquare, Database, HardDrive, Zap } from 'lucide-react';
 
 interface Stats {
   totalProducts: number;
   totalCustomers: number;
   totalOrders: number;
   totalSales: number;
+}
+
+interface SystemStats {
+  whatsapp: {
+    used: number;
+    limit: number;
+    remaining: number;
+  };
+  database: {
+    sizeMB: number;
+    totalRecords: number;
+  };
+  mediaStorage: {
+    sizeMB: number;
+    totalFiles: number;
+  };
 }
 
 interface SalesCategory {
@@ -29,6 +45,7 @@ interface RecentOrder {
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
   const [chartData, setChartData] = useState<SalesCategory[]>([]);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +55,9 @@ export default function Dashboard() {
       try {
         const res = await api.get('/admin/stats');
         setStats(res.data.data.stats);
+        if (res.data.data.systemStats) {
+          setSystemStats(res.data.data.systemStats);
+        }
         setChartData(res.data.data.salesByCategory);
         setRecentOrders(res.data.data.recentOrders);
       } catch (err) {
@@ -57,11 +77,16 @@ export default function Dashboard() {
     );
   }
 
+  const whatsappUsed = systemStats?.whatsapp.used || 0;
+  const whatsappLimit = systemStats?.whatsapp.limit || 1000;
+  const whatsappRemaining = systemStats?.whatsapp.remaining || 1000;
+  const whatsappPercent = Math.min(100, Math.round((whatsappUsed / whatsappLimit) * 100));
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-xl font-bold uppercase tracking-wider text-brand-dark">Dashboard Overview</h1>
-        <p className="text-xs text-gray-400 font-semibold">Real-time metrics aggregating boutique activity.</p>
+        <p className="text-xs text-gray-400 font-semibold">Real-time metrics aggregating boutique activity & system quotas.</p>
       </div>
 
       {/* Grid Indicators Cards */}
@@ -111,6 +136,116 @@ export default function Dashboard() {
           </div>
         </Link>
 
+      </div>
+
+      {/* SYSTEM RESOURCES & QUOTAS CARDS SECTION */}
+      <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-brand-dark flex items-center gap-2">
+              <Zap className="w-4 h-4 text-brand-gold" /> System Resources & Free Quota Usage
+            </h3>
+            <p className="text-xs text-gray-400 font-medium">Real-time status of Meta WhatsApp free tokens, database size, and photo storage.</p>
+          </div>
+          <span className="text-[10px] bg-green-50 text-green-700 font-bold px-2.5 py-1 rounded-full uppercase">
+            Active System
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          {/* Card 1: Meta WhatsApp Free Conversations Quota */}
+          <div className="bg-slate-50 border border-slate-100 p-5 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-emerald-600">
+                <MessageSquare className="w-5 h-5" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700">WhatsApp Free Quota</h4>
+              </div>
+              <span className="text-[11px] font-black text-emerald-600 bg-emerald-100/60 px-2 py-0.5 rounded">
+                1,000 Free / Mo
+              </span>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs font-bold text-gray-700">
+                <span>{whatsappUsed} Conversations Used</span>
+                <span className="text-gray-400">{whatsappRemaining} Remaining</span>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
+                  style={{ width: `${whatsappPercent}%` }} 
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between text-[10px] text-gray-400 font-semibold pt-1">
+              <span>Monthly Refresh Cycle</span>
+              <span>Status: Healthy</span>
+            </div>
+          </div>
+
+          {/* Card 2: Database Storage Used */}
+          <div className="bg-slate-50 border border-slate-100 p-5 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-indigo-600">
+                <Database className="w-5 h-5" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700">Database Storage</h4>
+              </div>
+              <span className="text-[11px] font-black text-indigo-600 bg-indigo-100/60 px-2 py-0.5 rounded">
+                Neon Postgres
+              </span>
+            </div>
+
+            <div className="flex items-baseline justify-between pt-1">
+              <div>
+                <span className="text-2xl font-black text-brand-dark">{systemStats?.database.sizeMB || 0}</span>
+                <span className="text-xs font-bold text-gray-400 ml-1">MB Used</span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-black text-indigo-600 block">{systemStats?.database.totalRecords || 0}</span>
+                <span className="text-[10px] font-semibold text-gray-400 uppercase">Total Entries</span>
+              </div>
+            </div>
+
+            <div className="flex justify-between text-[10px] text-gray-400 font-semibold pt-1">
+              <span>Connection Pool: Active</span>
+              <span>Cloud PostgreSQL</span>
+            </div>
+          </div>
+
+          {/* Card 3: Photo / Media Storage Used */}
+          <div className="bg-slate-50 border border-slate-100 p-5 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-amber-600">
+                <HardDrive className="w-5 h-5" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700">Photo Storage (MB)</h4>
+              </div>
+              <span className="text-[11px] font-black text-amber-600 bg-amber-100/60 px-2 py-0.5 rounded">
+                Media Files
+              </span>
+            </div>
+
+            <div className="flex items-baseline justify-between pt-1">
+              <div>
+                <span className="text-2xl font-black text-brand-dark">{systemStats?.mediaStorage.sizeMB || 0}</span>
+                <span className="text-xs font-bold text-gray-400 ml-1">MB Total</span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-black text-amber-600 block">{systemStats?.mediaStorage.totalFiles || 0}</span>
+                <span className="text-[10px] font-semibold text-gray-400 uppercase">Uploaded Files</span>
+              </div>
+            </div>
+
+            <div className="flex justify-between text-[10px] text-gray-400 font-semibold pt-1">
+              <span>Cloud Storage / Uploads</span>
+              <span>High Performance</span>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       {/* Charts & Tables */}

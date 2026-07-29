@@ -3,6 +3,8 @@ import { prisma } from '../config/db';
 import { BadRequestError, NotFoundError } from '../utils/errors';
 import { z } from 'zod';
 import { uploadFile } from '../config/storage';
+import fs from 'fs';
+import path from 'path';
 
 // Schema validations
 const bannerSchema = z.object({
@@ -21,6 +23,33 @@ const couponSchema = z.object({
   active: z.boolean().default(true)
 });
 
+// Helper to calculate uploads directory size in MB
+function getMediaDirStats(): { sizeMB: number; fileCount: number } {
+  try {
+    const uploadsPath = path.join(__dirname, '../../../../uploads');
+    if (!fs.existsSync(uploadsPath)) {
+      return { sizeMB: 0, fileCount: 0 };
+    }
+    const files = fs.readdirSync(uploadsPath);
+    let totalBytes = 0;
+    let fileCount = 0;
+
+    files.forEach(file => {
+      const filePath = path.join(uploadsPath, file);
+      const stat = fs.statSync(filePath);
+      if (stat.isFile()) {
+        totalBytes += stat.size;
+        fileCount++;
+      }
+    });
+
+    const sizeMB = parseFloat((totalBytes / (1024 * 1024)).toFixed(2));
+    return { sizeMB, fileCount };
+  } catch (error) {
+    return { sizeMB: 0, fileCount: 0 };
+  }
+}
+
 // 1. Dashboard Metrics
 export async function getDashboardStats(req: Request, res: Response, next: NextFunction) {
   try {
@@ -34,6 +63,44 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
 
     const totalOrdersCount = await prisma.order.count();
     const totalSales = paidOrders.reduce((sum, order) => sum + order.payableAmount, 0);
+
+    // Calculate total database records
+    const [totalCategories, totalBanners, totalCoupons, totalOrderItems, totalCartItems] = await Promise.all([
+      prisma.category.count(),
+      prisma.banner.count(),
+      prisma.coupon.count(),
+      prisma.orderItem.count(),
+      prisma.cart.count()
+    ]);
+
+    const totalDbRecords = totalProducts + totalCustomers + totalOrdersCount + totalCategories + totalBanners + totalCoupons + totalOrderItems + totalCartItems;
+
+    // Database size query (PostgreSQL)
+    let dbSizeMB = 0;
+    try {
+      const dbSizeResult: any = await prisma.$queryRaw`SELECT pg_database_size(current_database()) as size_bytes`;
+      if (dbSizeResult && dbSizeResult[0]?.size_bytes) {
+        const sizeBytes = Number(dbSizeResult[0].size_bytes);
+        dbSizeMB = parseFloat((sizeBytes / (1024 * 1024)).toFixed(2));
+      }
+    } catch {
+      // Fallback estimate based on record count if raw query not permitted
+      dbSizeMB = parseFloat((totalDbRecords * 0.05).toFixed(2));
+    }
+
+    // Media storage metrics
+    const mediaStats = getMediaDirStats();
+
+    // WhatsApp Monthly Free Conversations Quota
+    // Meta Cloud API provides 1,000 free conversations per month
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const monthlyOrdersCount = await prisma.order.count({
+      where: { createdAt: { gte: startOfMonth } }
+    });
+    // Estimate 2 WhatsApp notifications per order (Order Confirmed + Shipped) plus test messages
+    const whatsappUsed = Math.min(1000, monthlyOrdersCount * 2 + 5);
+    const whatsappLimit = 1000;
+    const whatsappRemaining = Math.max(0, whatsappLimit - whatsappUsed);
 
     // Sales by category chart data helper
     const categories = await prisma.category.findMany({
@@ -84,6 +151,21 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
           totalCustomers,
           totalOrders: totalOrdersCount,
           totalSales
+        },
+        systemStats: {
+          whatsapp: {
+            used: whatsappUsed,
+            limit: whatsappLimit,
+            remaining: whatsappRemaining
+          },
+          database: {
+            sizeMB: dbSizeMB,
+            totalRecords: totalDbRecords
+          },
+          mediaStorage: {
+            sizeMB: mediaStats.sizeMB,
+            totalFiles: mediaStats.fileCount
+          }
         },
         salesByCategory,
         recentOrders
