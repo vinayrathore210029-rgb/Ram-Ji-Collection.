@@ -6,6 +6,7 @@ import { AuthRequest } from '../middlewares/auth';
 import { BadRequestError, NotFoundError } from '../utils/errors';
 import { z } from 'zod';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { sendWhatsAppNotification } from '../utils/whatsapp';
 
 // Order schemas
 const checkoutSchema = z.object({
@@ -152,7 +153,11 @@ export async function verifyPayment(req: AuthRequest, res: Response, next: NextF
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: true }
+      include: { 
+        items: true,
+        user: true,
+        shippingAddress: true
+      }
     });
 
     if (!order) {
@@ -217,6 +222,15 @@ export async function verifyPayment(req: AuthRequest, res: Response, next: NextF
         }
       });
     });
+
+    // 5. Send Automatic WhatsApp Notification to Customer
+    const recipientPhone = order.user.phone;
+    if (recipientPhone) {
+      sendWhatsAppNotification({
+        to: recipientPhone,
+        templateName: 'hello_world' // Default test template or custom order template
+      }).catch(err => console.error('WhatsApp notification failed:', err));
+    }
 
     res.json({
       success: true,
