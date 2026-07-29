@@ -97,8 +97,8 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     const loggedWhatsAppCount = await prisma.whatsAppLog.count({
       where: { createdAt: { gte: startOfMonth } }
     });
-    // Real-time count of logged messages, minimum 5 for initial tests
-    const whatsappUsed = Math.min(1000, Math.max(5, loggedWhatsAppCount));
+    // Exact real-time count from database logs
+    const whatsappUsed = Math.min(1000, loggedWhatsAppCount);
     const whatsappLimit = 1000;
     const whatsappRemaining = Math.max(0, whatsappLimit - whatsappUsed);
 
