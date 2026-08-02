@@ -32,6 +32,8 @@ export default function Products() {
   const [newArrival, setNewArrival] = useState(false);
   const [bestSeller, setBestSeller] = useState(false);
   const [imageFiles, setImageFiles] = useState<FileList | null>(null);
+  const [existingImages, setExistingImages] = useState<{ id: string; url: string; isPrimary: boolean }[]>([]);
+  const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
 
   const fetchProducts = async () => {
     try {
@@ -73,6 +75,7 @@ export default function Products() {
     setNewArrival(false);
     setBestSeller(false);
     setImageFiles(null);
+    setExistingImages([]);
     setShowModal(true);
   };
 
@@ -95,7 +98,22 @@ export default function Products() {
     setNewArrival(p.newArrival);
     setBestSeller(p.bestSeller);
     setImageFiles(null);
+    setExistingImages(p.images || []);
     setShowModal(true);
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+    setDeletingImageId(imageId);
+    try {
+      await api.delete(`/products/images/${imageId}`);
+      setExistingImages(prev => prev.filter(img => img.id !== imageId));
+      fetchProducts();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete image');
+    } finally {
+      setDeletingImageId(null);
+    }
   };
 
   const handleSizeToggle = (size: string) => {
@@ -413,14 +431,75 @@ export default function Products() {
                 </label>
               </div>
 
-              {/* Upload Images */}
-              <div className="col-span-2 space-y-1 border-t border-gray-100 pt-4">
-                <span className="text-[10px] font-bold text-gray-400 uppercase block">Product Images (Upload)</span>
-                <input 
-                  type="file" multiple accept="image/*"
-                  onChange={(e) => setImageFiles(e.target.files)}
-                  className="w-full text-xs font-semibold text-gray-500 cursor-pointer file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-brand-gold hover:file:bg-orange-100"
-                />
+              {/* Upload Images & Gallery */}
+              <div className="col-span-2 space-y-3 border-t border-gray-100 pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase block">
+                    Product Images (Max 3 Photos)
+                  </span>
+                  <span className={`text-[10px] font-bold ${existingImages.length >= 3 ? 'text-red-500' : 'text-brand-gold'}`}>
+                    {existingImages.length}/3 Uploaded
+                  </span>
+                </div>
+
+                {/* Existing Images Gallery */}
+                {existingImages.length > 0 && (
+                  <div className="flex flex-wrap gap-3">
+                    {existingImages.map((img, idx) => (
+                      <div key={img.id} className="relative group w-20 h-24 bg-gray-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                        <img src={img.url} alt={`Product ${idx + 1}`} className="w-full h-full object-cover" />
+                        {img.isPrimary && (
+                          <span className="absolute top-1 left-1 bg-brand-gold text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">
+                            Main
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteImage(img.id)}
+                          disabled={deletingImageId === img.id}
+                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow-md transition-transform hover:scale-110 disabled:opacity-50"
+                          title="Delete photo"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* File Input */}
+                {existingImages.length < 3 ? (
+                  <div className="space-y-1">
+                    <input 
+                      type="file" multiple accept="image/*"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (!files) return;
+                        const available = 3 - existingImages.length;
+                        if (files.length > available) {
+                          alert(`Maximum 3 photos allowed per product. You can only select ${available} more photo(s).`);
+                          e.target.value = '';
+                          setImageFiles(null);
+                          return;
+                        }
+                        setImageFiles(files);
+                      }}
+                      className="w-full text-xs font-semibold text-gray-500 cursor-pointer file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-brand-gold hover:file:bg-orange-100"
+                    />
+                    <span className="text-[10px] text-gray-400 block">
+                      Select up to {3 - existingImages.length} photo(s). JPG, PNG, WEBP supported.
+                    </span>
+                  </div>
+                ) : (
+                  <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 text-center">
+                    <p className="text-xs font-bold text-orange-700">
+                      Maximum limit reached (3/3 photos).
+                    </p>
+                    <p className="text-[10px] text-orange-500 font-semibold mt-0.5">
+                      Delete an existing photo above if you want to upload a new one.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="col-span-2 pt-4 flex gap-4">

@@ -206,6 +206,9 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
     const uploadedImages: string[] = [];
     const files = req.files as Express.Multer.File[] | undefined;
     if (files && files.length > 0) {
+      if (files.length > 3) {
+        throw new BadRequestError('Maximum 3 images allowed per product');
+      }
       for (const file of files) {
         const url = await uploadFile(file.buffer, file.originalname, file.mimetype);
         uploadedImages.push(url);
@@ -288,9 +291,13 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
     }
 
     // Handle files upload (optional new images)
+    const existingImageCount = await prisma.productImage.count({ where: { productId: id } });
     const uploadedImages: string[] = [];
     const files = req.files as Express.Multer.File[] | undefined;
     if (files && files.length > 0) {
+      if (existingImageCount + files.length > 3) {
+        throw new BadRequestError(`Maximum 3 images allowed per product. Product currently has ${existingImageCount} images.`);
+      }
       for (const file of files) {
         const url = await uploadFile(file.buffer, file.originalname, file.mimetype);
         uploadedImages.push(url);
@@ -307,19 +314,28 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
       });
 
       if (uploadedImages.length > 0) {
-        // Reset primary flag for existing images when new images are uploaded
-        await tx.productImage.updateMany({
-          where: { productId: id },
-          data: { isPrimary: false }
+        // Reset primary flag for existing images if no image was primary or new images are added
+        const hasPrimary = await tx.productImage.findFirst({
+          where: { productId: id, isPrimary: true }
         });
 
-        await tx.productImage.createMany({
-          data: uploadedImages.map((url, index) => ({
-            productId: id,
-            url,
-            isPrimary: index === 0
-          }))
-        });
+        if (!hasPrimary) {
+          await tx.productImage.createMany({
+            data: uploadedImages.map((url, index) => ({
+              productId: id,
+              url,
+              isPrimary: index === 0
+            }))
+          });
+        } else {
+          await tx.productImage.createMany({
+            data: uploadedImages.map((url) => ({
+              productId: id,
+              url,
+              isPrimary: false
+            }))
+          });
+        }
       }
 
       return tx.product.findUnique({
@@ -360,6 +376,49 @@ export async function deleteProduct(req: Request, res: Response, next: NextFunct
     res.json({
       success: true,
       message: 'Product deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deleteProductImage(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { imageId } = req.params;
+
+    const image = await prisma.productImage.findUnique({
+      where: { id: imageId }
+    });
+
+    if (!image) {
+      throw new NotFoundError('Product image not found');
+    }
+
+    const productId = image.productId;
+    const wasPrimary = image.isPrimary;
+
+    await prisma.productImage.delete({
+      where: { id: imageId }
+    });
+
+    // If the deleted image was primary, assign primary to next available image
+    if (wasPrimary) {
+      const nextImage = await prisma.productImage.findFirst({
+        where: { productId },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (nextImage) {
+        await prisma.productImage.update({
+          where: { id: nextImage.id },
+          data: { isPrimary: true }
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Product image deleted successfully'
     });
   } catch (error) {
     next(error);
