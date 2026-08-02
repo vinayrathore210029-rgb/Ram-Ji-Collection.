@@ -307,16 +307,17 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
       });
 
       if (uploadedImages.length > 0) {
-        // If there were no prior primary images, set the first new one as primary
-        const primaryImageCount = await tx.productImage.count({
-          where: { productId: id, isPrimary: true }
+        // Reset primary flag for existing images when new images are uploaded
+        await tx.productImage.updateMany({
+          where: { productId: id },
+          data: { isPrimary: false }
         });
 
         await tx.productImage.createMany({
           data: uploadedImages.map((url, index) => ({
             productId: id,
             url,
-            isPrimary: primaryImageCount === 0 && index === 0
+            isPrimary: index === 0
           }))
         });
       }
