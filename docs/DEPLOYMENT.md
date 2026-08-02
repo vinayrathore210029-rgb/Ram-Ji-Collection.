@@ -17,5 +17,5 @@ The applications can be deployed to modern serverless and cloud hosting provider
    - Provides fully managed serverless PostgreSQL instances with connection pooling.
 
 4. **Image Assets Storage**
-   - Recommended Platform: **Cloudflare R2**
-   - S3-compatible cloud storage bucket providing global file delivery with zero egress fees.
+   - Recommended Platform: **Cloudinary** (or Cloudflare R2)
+   - Cloud image management providing automatic format optimization (WebP/AVIF), dynamic resizing, and 25GB free tier.
