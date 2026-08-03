@@ -87,6 +87,7 @@ export interface Order {
   shippingAddressId: string;
   billingAddressId: string;
   paymentStatus: PaymentStatus;
+  paymentMethod?: string;
   paymentId: string | null;
   orderIdRazorpay: string | null;
   createdAt: Date;
@@ -135,6 +136,9 @@ export interface Address {
   state: string;
   postalCode: string;
   country: string;
+  googleMapsUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   isDefault: boolean;
 }
 

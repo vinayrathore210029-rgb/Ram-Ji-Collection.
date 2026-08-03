@@ -95,7 +95,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
                   console.log(`[WhatsApp Incoming] From: ${from}, Text: "${messageText}"`);
 
-                  // Log inbound message in database for real-time quota tracking
+                  // Log inbound message in database without sending automated reply (Token Protection)
                   await prisma.whatsAppLog.create({
                     data: {
                       direction: 'INBOUND',
@@ -104,11 +104,8 @@ export const handleWebhook = async (req: Request, res: Response) => {
                     }
                   }).catch(err => console.error('Failed to log inbound WhatsApp message:', err));
 
-                  // Auto-reply message for testing
-                  const replyText = `Welcome to Ram Ji Collection! 🛍️✨\n\nThank you for messaging us. Check out our latest fashion collections at:\nhttps://ram-ji-collection-web-one.vercel.app/\n\nHow can we help you today?`;
-
-                  // Send auto reply asynchronously
-                  sendAutoReply(from, replyText);
+                  // NOTE: Automatic bot reply is disabled to conserve Meta API quota/tokens.
+                  // Customers are instructed to contact support via 8815179854.
                 }
               }
               if (value?.statuses && Array.isArray(value.statuses)) {

@@ -9,6 +9,7 @@ import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
 import Auth from './pages/Auth';
+import OrderSuccess from './pages/OrderSuccess';
 
 export default function App() {
   const { checkAuth } = useAuthStore();
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/shop" element={<Shop />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order-success/:id" element={<OrderSuccess />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/auth" element={<Auth />} />
           </Routes>

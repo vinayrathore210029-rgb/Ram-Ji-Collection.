@@ -6,7 +6,7 @@ import { AuthRequest } from '../middlewares/auth';
 import { BadRequestError, NotFoundError } from '../utils/errors';
 import { z } from 'zod';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
-import { sendWhatsAppNotification } from '../utils/whatsapp';
+import { sendWhatsAppNotification, formatOrderWhatsAppMessage } from '../utils/whatsapp';
 
 // Order schemas
 const checkoutSchema = z.object({
@@ -86,7 +86,8 @@ export async function checkout(req: AuthRequest, res: Response, next: NextFuncti
           couponCode: couponCode || null,
           shippingAddressId,
           billingAddressId,
-          paymentStatus: 'PENDING'
+          paymentStatus: 'PENDING',
+          paymentMethod: 'CALL_VERIFICATION'
         }
       });
 
@@ -102,40 +103,57 @@ export async function checkout(req: AuthRequest, res: Response, next: NextFuncti
         }))
       });
 
+      // 3. Reduce product stock
+      for (const item of cartItems) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: { decrement: item.quantity }
+          }
+        });
+      }
+
+      // 4. Clear user cart
+      await tx.cart.deleteMany({
+        where: { userId }
+      });
+
+      // 5. Create in-app notification
+      await tx.notification.create({
+        data: {
+          userId,
+          title: 'Order Placed',
+          message: `Your order #${o.id.substring(0, 8).toUpperCase()} has been placed. Our team will call you for order confirmation & payment.`
+        }
+      });
+
       return o;
     });
 
-    // Generate Razorpay Order
-    // Razorpay amount is in paise (1 INR = 100 paise)
-    const options = {
-      amount: Math.round(payableAmount * 100),
-      currency: 'INR',
-      receipt: `receipt_order_${order.id}`
-    };
-
-    let rzOrder;
-    try {
-      rzOrder = await razorpay.orders.create(options);
-    } catch (err: any) {
-      console.error('Razorpay Order creation failed:', err);
-      // Even if Razorpay fails, order is saved as pending in db, user can retry
-      throw new BadRequestError('Failed to generate payment gateway order. Please try again.');
-    }
-
-    // Save Razorpay order ID
-    const updatedOrder = await prisma.order.update({
+    // Fetch full order for WhatsApp notification & response
+    const fullOrder = await prisma.order.findUnique({
       where: { id: order.id },
-      data: { orderIdRazorpay: rzOrder.id },
-      include: { items: { include: { product: true } } }
+      include: {
+        items: { include: { product: true } },
+        user: true,
+        shippingAddress: true
+      }
     });
+
+    // Send instant WhatsApp notification to customer
+    if (fullOrder && fullOrder.user.phone) {
+      const msg = formatOrderWhatsAppMessage(fullOrder as any);
+      sendWhatsAppNotification({
+        to: fullOrder.user.phone,
+        textMessage: msg
+      }).catch(err => console.error('Failed to send instant order WhatsApp message:', err));
+    }
 
     res.status(201).json({
       success: true,
-      message: 'Checkout initialized successfully',
+      message: 'Order placed successfully. Our team will call you for confirmation.',
       data: {
-        order: updatedOrder,
-        razorpayKey: process.env.RAZORPAY_KEY_ID || 'rzp_test_yourkeyid',
-        razorpayOrder: rzOrder
+        order: fullOrder
       }
     });
   } catch (error: any) {
@@ -154,7 +172,7 @@ export async function verifyPayment(req: AuthRequest, res: Response, next: NextF
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: { 
-        items: true,
+        items: { include: { product: true } },
         user: true,
         shippingAddress: true
       }
@@ -223,13 +241,14 @@ export async function verifyPayment(req: AuthRequest, res: Response, next: NextF
       });
     });
 
-    // 5. Send Automatic WhatsApp Notification to Customer
+    // 5. Send Automatic WhatsApp Order Purchase Notification to Customer
     const recipientPhone = order.user.phone;
     if (recipientPhone) {
+      const whatsappMessage = formatOrderWhatsAppMessage(order as any);
       sendWhatsAppNotification({
         to: recipientPhone,
-        templateName: 'hello_world' // Default test template or custom order template
-      }).catch(err => console.error('WhatsApp notification failed:', err));
+        textMessage: whatsappMessage
+      }).catch(err => console.error('WhatsApp order notification failed:', err));
     }
 
     res.json({

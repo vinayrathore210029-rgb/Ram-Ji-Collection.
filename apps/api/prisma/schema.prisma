@@ -117,6 +117,9 @@ model Address {
   state          String
   postalCode     String
   country        String   @default("India")
+  googleMapsUrl  String?
+  latitude       Float?
+  longitude      Float?
   isDefault      Boolean  @default(false)
   shippingOrders Order[]  @relation("ShippingAddress")
   billingOrders  Order[]  @relation("BillingAddress")
@@ -159,6 +162,7 @@ model Order {
   billingAddressId  String
   billingAddress    Address       @relation("BillingAddress", fields: [billingAddressId], references: [id])
   paymentStatus     PaymentStatus @default(PENDING)
+  paymentMethod     String        @default("CALL_VERIFICATION")
   paymentId         String?       // Razorpay payment ID after payment success
   orderIdRazorpay   String?       // Razorpay order ID generated before payment
   items             OrderItem[]
@@ -228,3 +232,13 @@ model WhatsAppLog {
   message   String?
   createdAt DateTime @default(now())
 }
+
+model OtpVerification {
+  id         String   @id @default(uuid())
+  phone      String   @unique
+  otp        String
+  expiresAt  DateTime
+  lastSentAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+}
+
