@@ -36,13 +36,12 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    console.log('CORS Debug - Request Origin:', origin);
-    console.log('CORS Debug - Allowed Origins:', allowedOrigins);
-    // allow requests with no origin (like mobile apps or curl requests)
+    // allow requests with no origin (like mobile apps, curl, or Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    // In development mode, allow all local network origins for mobile testing
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
     }
     return callback(null, true);
   },
