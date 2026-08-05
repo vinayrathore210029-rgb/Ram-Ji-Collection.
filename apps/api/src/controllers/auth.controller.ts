@@ -200,3 +200,19 @@ export async function refresh(req: Request, res: Response, next: NextFunction) {
     next(new UnauthorizedError('Invalid or expired refresh token'));
   }
 }
+
+export async function deleteAccount(req: any, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user.id;
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    res.json({
+      success: true,
+      message: 'Account deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}

@@ -12,6 +12,7 @@ interface AuthState {
   login: (credentials: { email: string; password: string }) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
+  deleteAccount: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
@@ -64,6 +65,19 @@ export const useAuthStore = create<AuthState>((set, get) => {
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       set({ user: null, token: null });
+    },
+
+    deleteAccount: async () => {
+      set({ loading: true });
+      try {
+        await api.delete('/auth/account');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        set({ user: null, token: null, loading: false });
+      } catch (error: any) {
+        set({ loading: false });
+        throw error.response?.data?.message || 'Failed to delete account';
+      }
     },
 
     checkAuth: async () => {

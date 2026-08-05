@@ -4,14 +4,14 @@ import api from '../services/api';
 import { useAuthStore, useWishlistStore } from '../context/store';
 import ProductCard from '../components/ProductCard';
 import { Order, Address } from '@ramjicollection/types';
-import { User, ClipboardList, MapPin, Heart, LogOut, ShieldAlert } from 'lucide-react';
+import { User, ClipboardList, MapPin, Heart, LogOut, ShieldAlert, Trash2 } from 'lucide-react';
 
 export default function Profile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const tab = searchParams.get('tab') || 'profile';
 
-  const { user, logout } = useAuthStore();
+  const { user, logout, deleteAccount } = useAuthStore();
   const { items: wishlistItems, fetchWishlist } = useWishlistStore();
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -60,6 +60,19 @@ export default function Profile() {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmMessage = 'kya aap sach me apna account permanently delete karna chahte hain? Isse aapka sara data delete ho jayega.';
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      await deleteAccount();
+      alert('Aapka account safaltapoorvak delete ho gaya hai.');
+      navigate('/');
+    } catch (err: any) {
+      alert(err.toString() || 'Account delete karne me samasya aayi.');
+    }
   };
 
   const handleCreateAddress = async (e: React.FormEvent) => {
@@ -200,6 +213,25 @@ export default function Profile() {
                   <div>
                     <span className="text-gray-400 font-medium uppercase tracking-wider block mb-1">Phone Number</span>
                     <span className="text-brand-charcoal font-bold text-sm">{user?.phone || 'Not registered'}</span>
+                  </div>
+                </div>
+
+                {/* Account Settings / Danger Zone */}
+                <div className="pt-6 border-t border-gray-100 space-y-3">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                    <ShieldAlert className="w-4 h-4 text-rose-600" /> Account Settings
+                  </h3>
+                  <div className="bg-rose-50/50 border border-rose-100 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <p className="text-xs font-bold text-brand-charcoal">Delete Account</p>
+                      <p className="text-[11px] text-gray-500 font-medium">Permanently remove your account and all associated order/address records.</p>
+                    </div>
+                    <button
+                      onClick={handleDeleteAccount}
+                      className="px-4 py-2 bg-brand-red hover:bg-red-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition-all hover:scale-105"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Delete Account
+                    </button>
                   </div>
                 </div>
               </div>
