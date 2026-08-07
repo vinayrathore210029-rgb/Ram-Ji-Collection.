@@ -242,3 +242,13 @@ model OtpVerification {
   createdAt  DateTime @default(now())
 }
 
+model EmailOtpVerification {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  otp        String
+  expiresAt  DateTime
+  lastSentAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+}
+
+
