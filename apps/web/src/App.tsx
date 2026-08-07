@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useAuthStore } from './context/store';
+import { useAuthStore, useCartStore, useWishlistStore } from './context/store';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -13,9 +13,14 @@ import OrderSuccess from './pages/OrderSuccess';
 
 export default function App() {
   const { checkAuth } = useAuthStore();
+  const { fetchCart } = useCartStore();
+  const { fetchWishlist } = useWishlistStore();
 
   useEffect(() => {
-    checkAuth();
+    checkAuth().then(() => {
+      fetchCart();
+      fetchWishlist();
+    });
   }, []);
 
   return (

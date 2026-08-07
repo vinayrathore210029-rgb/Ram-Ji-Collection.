@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useCartStore, useWishlistStore, useAuthStore } from '../context/store';
 import { Product } from '@ramjicollection/types';
-import { Star, Heart, ShoppingBag, Truck, RotateCcw, ShieldCheck } from 'lucide-react';
+import { Star, Heart, ShoppingBag, Truck, RotateCcw, ShieldCheck, Zap, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +15,9 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   // Review states
   const [rating, setRating] = useState(5);
@@ -23,9 +25,16 @@ export default function ProductDetail() {
   const [submittingReview, setSubmittingReview] = useState(false);
 
   const { user } = useAuthStore();
-  const { addItem } = useCartStore();
+  const { items: cartItems, addItem, fetchCart } = useCartStore();
   const { toggleWishlist, isInWishlist } = useWishlistStore();
   const isFav = product ? isInWishlist(product.id) : false;
+
+  // Check if current selected variant is already in cart
+  const existingCartItem = product
+    ? cartItems.find(
+        (item) => item.productId === product.id && item.size === selectedSize && item.color === selectedColor
+      )
+    : null;
 
   const fetchProduct = async () => {
     try {
@@ -51,6 +60,9 @@ export default function ProductDetail() {
 
   useEffect(() => {
     fetchProduct();
+    if (user) {
+      fetchCart();
+    }
   }, [id]);
 
   if (loading) {
@@ -76,11 +88,16 @@ export default function ProductDetail() {
   }
 
   const handleAddToCart = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
     if (!selectedSize || !selectedColor) {
       setErrorMsg('Please select size and color');
       return;
     }
     setErrorMsg('');
+    setSuccessMsg('');
     setAddingToCart(true);
     try {
       await addItem({
@@ -89,11 +106,41 @@ export default function ProductDetail() {
         size: selectedSize,
         color: selectedColor
       });
-      alert('Product added to cart!');
+      setSuccessMsg(
+        existingCartItem
+          ? `Quantity updated in your bag! (Total: ${existingCartItem.quantity + quantity})`
+          : 'Product added to bag successfully!'
+      );
     } catch (err: any) {
       setErrorMsg(err.toString());
     } finally {
       setAddingToCart(false);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    if (!selectedSize || !selectedColor) {
+      setErrorMsg('Please select size and color');
+      return;
+    }
+    setErrorMsg('');
+    setBuyingNow(true);
+    try {
+      await addItem({
+        productId: product.id,
+        quantity,
+        size: selectedSize,
+        color: selectedColor
+      });
+      navigate('/checkout');
+    } catch (err: any) {
+      setErrorMsg(err.toString());
+    } finally {
+      setBuyingNow(false);
     }
   };
 
@@ -255,26 +302,66 @@ export default function ProductDetail() {
 
           {/* Actions */}
           {product.stock > 0 ? (
-            <div className="space-y-3 pt-2">
-              <div className="flex gap-4">
+            <div className="space-y-4 pt-2">
+              {/* Already in bag badge */}
+              {existingCartItem && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-900 font-semibold shadow-sm">
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    Pehle se Bag mein add hai (Pcs: <strong>{existingCartItem.quantity}</strong>)
+                  </span>
+                  <button
+                    onClick={() => navigate('/checkout')}
+                    className="text-xs font-bold text-emerald-700 hover:text-emerald-900 underline flex items-center gap-1"
+                  >
+                    Go to Bag <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+
+              {/* Action Buttons Row */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* ADD TO BAG */}
                 <button
                   onClick={handleAddToCart}
-                  disabled={addingToCart}
-                  className="flex-1 py-3.5 bg-brand-charcoal hover:bg-brand-gold hover:scale-[1.01] text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all duration-300"
+                  disabled={addingToCart || buyingNow}
+                  className="flex-1 py-3.5 bg-brand-charcoal hover:bg-black text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-md flex items-center justify-center gap-2 hover:scale-[1.01] transition-all duration-300 disabled:opacity-50"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  {addingToCart ? 'Adding...' : 'Add to Bag'}
+                  {addingToCart ? 'Adding...' : existingCartItem ? 'Add Again (+1)' : 'Add to Bag'}
                 </button>
 
+                {/* BUY NOW (DIRECT CHECKOUT) */}
+                <button
+                  onClick={handleBuyNow}
+                  disabled={addingToCart || buyingNow}
+                  className="flex-1 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-full font-extrabold text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 hover:scale-[1.01] transition-all duration-300 disabled:opacity-50"
+                >
+                  <Zap className="w-4 h-4 fill-white" />
+                  {buyingNow ? 'Redirecting...' : 'Buy Now'}
+                </button>
+
+                {/* WISHLIST */}
                 <button
                   onClick={() => toggleWishlist(product)}
-                  className={`p-3.5 rounded-full border border-gray-200 hover:border-brand-red hover:text-brand-red transition-all ${
+                  className={`p-3.5 rounded-full border border-gray-200 hover:border-brand-red hover:text-brand-red transition-all flex items-center justify-center ${
                     isFav ? 'bg-rose-50 border-rose-200 text-brand-red' : 'bg-white text-gray-400'
                   }`}
+                  title={isFav ? 'Remove from wishlist' : 'Add to wishlist'}
                 >
                   <Heart className={`w-5 h-5 ${isFav ? 'fill-brand-red' : ''}`} />
                 </button>
               </div>
+
+              {/* Toast / Alert Feedback messages */}
+              {successMsg && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700 font-bold flex items-center justify-between">
+                  <span>✓ {successMsg}</span>
+                  <button onClick={() => navigate('/checkout')} className="underline font-bold text-green-900 ml-2">
+                    View Cart →
+                  </button>
+                </div>
+              )}
               {errorMsg && <p className="text-xs text-brand-red font-semibold">{errorMsg}</p>}
             </div>
           ) : (
