@@ -10,9 +10,10 @@ export default function Orders() {
   const fetchOrders = async () => {
     try {
       const res = await api.get('/admin/orders');
-      setOrders(res.data.data);
+      setOrders(Array.isArray(res.data?.data) ? res.data.data : []);
     } catch (err) {
       console.error(err);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -56,6 +57,11 @@ export default function Orders() {
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-gold" />
           </div>
+        ) : orders.length === 0 ? (
+          <div className="text-center py-16 px-4">
+            <p className="text-sm font-bold text-gray-500">No orders found</p>
+            <p className="text-xs text-gray-400 mt-1">Customer orders will appear here for call verification and approval.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-medium text-gray-500">
@@ -74,15 +80,16 @@ export default function Orders() {
                   const customerPhone = order.user?.phone || 'No phone';
                   const cleanPhone = customerPhone.replace(/\D/g, '');
                   const mapsUrl = (order.shippingAddress as any)?.googleMapsUrl;
+                  const displayAmount = order.payableAmount ?? order.totalAmount ?? 0;
 
                   return (
                     <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4 font-mono">
                         <span className="block text-[11px] font-extrabold text-brand-charcoal">
-                          #{order.id.substring(0, 8).toUpperCase()}
+                          #{order.id ? order.id.substring(0, 8).toUpperCase() : 'UNKNOWN'}
                         </span>
                         <span className="text-[10px] text-gray-400 font-normal">
-                          {new Date(order.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : ''}
                         </span>
                       </td>
 
@@ -123,7 +130,7 @@ export default function Orders() {
                         {order.shippingAddress ? (
                           <div className="space-y-0.5">
                             <p className="text-[11px] text-gray-700 leading-tight">
-                              {order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.postalCode}
+                              {order.shippingAddress.street || ''}, {order.shippingAddress.city || ''}, {order.shippingAddress.state || ''} - {order.shippingAddress.postalCode || ''}
                             </p>
                             {mapsUrl && (
                               <a
@@ -142,7 +149,7 @@ export default function Orders() {
                       </td>
 
                       <td className="px-6 py-4 font-bold text-brand-charcoal text-sm">
-                        ₹{Math.round(order.payableAmount)}
+                        ₹{Math.round(displayAmount)}
                       </td>
 
                       {/* Quick Accept / Reject Action Buttons */}

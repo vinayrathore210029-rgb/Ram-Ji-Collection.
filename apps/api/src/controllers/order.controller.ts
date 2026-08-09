@@ -346,11 +346,15 @@ export async function adminGetOrders(req: Request, res: Response, next: NextFunc
   try {
     const orders = await prisma.order.findMany({
       include: {
+        shippingAddress: true,
+        billingAddress: true,
         user: {
           select: {
+            id: true,
             firstName: true,
             lastName: true,
-            email: true
+            email: true,
+            phone: true
           }
         }
       },
