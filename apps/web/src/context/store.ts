@@ -11,9 +11,6 @@ interface AuthState {
   loading: boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   register: (data: any) => Promise<void>;
-  forgotPasswordEmail: (email: string) => Promise<any>;
-  resetPasswordEmail: (data: { email: string; otp: string; newPassword: string }) => Promise<void>;
-  googleLogin: (credentialOrToken: { credential?: string; accessToken?: string }) => Promise<void>;
   logout: () => void;
   deleteAccount: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -61,45 +58,6 @@ export const useAuthStore = create<AuthState>((set, get) => {
       } catch (error: any) {
         set({ loading: false });
         throw error.response?.data?.message || 'Registration failed';
-      }
-    },
-
-    forgotPasswordEmail: async (email) => {
-      set({ loading: true });
-      try {
-        const response = await api.post('/auth/forgot-password-email', { email });
-        set({ loading: false });
-        return response.data;
-      } catch (error: any) {
-        set({ loading: false });
-        throw error.response?.data?.message || 'Failed to send OTP to email';
-      }
-    },
-
-    resetPasswordEmail: async (data) => {
-      set({ loading: true });
-      try {
-        await api.post('/auth/reset-password-email', data);
-        set({ loading: false });
-      } catch (error: any) {
-        set({ loading: false });
-        throw error.response?.data?.message || 'Failed to reset password';
-      }
-    },
-
-    googleLogin: async (credentialOrToken) => {
-      set({ loading: true });
-      try {
-        const response = await api.post('/auth/google', credentialOrToken);
-        const { token, refreshToken, user } = response.data.data;
-
-        localStorage.setItem('token', token);
-        localStorage.setItem('refreshToken', refreshToken);
-
-        set({ token, user, loading: false });
-      } catch (error: any) {
-        set({ loading: false });
-        throw error.response?.data?.message || 'Google login failed';
       }
     },
 
