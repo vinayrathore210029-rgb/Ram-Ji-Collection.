@@ -76,14 +76,16 @@ export default function Orders() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 font-semibold text-brand-dark">
-                {orders.map((order) => {
+                {orders.map((order, idx) => {
+                  if (!order || typeof order !== 'object') return null;
+                  const orderId = order.id || `order-${idx}`;
                   const customerPhone = order.user?.phone || 'No phone';
                   const cleanPhone = customerPhone.replace(/\D/g, '');
                   const mapsUrl = (order.shippingAddress as any)?.googleMapsUrl;
                   const displayAmount = order.payableAmount ?? order.totalAmount ?? 0;
 
                   return (
-                    <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                    <tr key={orderId} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4 font-mono">
                         <span className="block text-[11px] font-extrabold text-brand-charcoal">
                           #{order.id ? order.id.substring(0, 8).toUpperCase() : 'UNKNOWN'}
