@@ -18,7 +18,7 @@ export default function Login() {
       await login({ email, password });
       navigate('/');
     } catch (err: any) {
-      setErrorMsg(err.toString());
+      setErrorMsg(typeof err === 'string' ? err : err.message || 'Login failed. Please check credentials.');
     }
   };
 

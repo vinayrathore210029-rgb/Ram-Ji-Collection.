@@ -9,11 +9,16 @@ export default {
     extend: {
       colors: {
         brand: {
-          light: '#fcfbf7', // Premium parchment background
-          dark: '#0f0f0f',  // Deep pitch black
-          charcoal: '#1a1a1a', // Soft charcoal gray
-          gold: '#c5a880',  // Premium dull gold
-          goldHover: '#b5976f',
+          light: '#FAF6F0', // Premium parchment background
+          dark: '#1A080B',  // Royal dark maroon pitch
+          charcoal: '#260B10', // Deep royal wine charcoal
+          gold: '#C5A880',  // Premium dull gold
+          goldHover: '#B5976F',
+          goldAccent: '#D4AF37', // Royal Zari Gold
+          goldGlow: '#F5D061',
+          maroon: '#4A0E17', // Shahi Maroon
+          wine: '#3B0910',   // Deep Silk Wine
+          vermilion: '#990000', // Traditional Kumkum Red
           bronze: '#8c6d4f',
           red: '#a34848'
         }

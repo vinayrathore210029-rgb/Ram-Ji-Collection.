@@ -14,7 +14,7 @@ export default function Auth() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  
+
   // OTP state
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -53,11 +53,9 @@ export default function Auth() {
     try {
       const res = await api.post('/auth/send-otp', { phone });
       setOtpSent(true);
-      setCooldownSeconds(120); // 2 minute strict cooldown
-      setSuccessMsg('OTP sent to your phone number via WhatsApp/SMS!');
-      if (res.data.data?.devOtp) {
-        console.log('[Dev mode OTP]:', res.data.data.devOtp);
-      }
+      setOtp(''); // Keep OTP input completely blank for manual typing
+      setCooldownSeconds(120); // 2 minute cooldown
+      setSuccessMsg('OTP verification code sent to your mobile number via WhatsApp!');
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.toString());
     } finally {
@@ -107,22 +105,20 @@ export default function Auth() {
   return (
     <div className="max-w-md mx-auto px-4 py-16 flex flex-col justify-center min-h-[70vh]">
       <div className="bg-white border border-gray-100 rounded-3xl p-8 shadow-md space-y-6">
-        
+
         {/* Header Tabs */}
         <div className="flex border-b border-gray-100 pb-3 justify-center gap-8">
           <button
             onClick={() => { setIsLoginTab(true); setErrorMsg(''); setSuccessMsg(''); }}
-            className={`text-sm font-bold uppercase tracking-wider pb-1 flex items-center gap-1.5 transition-all ${
-              isLoginTab ? 'text-brand-gold border-b-2 border-brand-gold' : 'text-gray-400'
-            }`}
+            className={`text-sm font-bold uppercase tracking-wider pb-1 flex items-center gap-1.5 transition-all ${isLoginTab ? 'text-brand-gold border-b-2 border-brand-gold' : 'text-gray-400'
+              }`}
           >
             <LogIn className="w-4 h-4" /> Sign In
           </button>
           <button
             onClick={() => { setIsLoginTab(false); setErrorMsg(''); setSuccessMsg(''); }}
-            className={`text-sm font-bold uppercase tracking-wider pb-1 flex items-center gap-1.5 transition-all ${
-              !isLoginTab ? 'text-brand-gold border-b-2 border-brand-gold' : 'text-gray-400'
-            }`}
+            className={`text-sm font-bold uppercase tracking-wider pb-1 flex items-center gap-1.5 transition-all ${!isLoginTab ? 'text-brand-gold border-b-2 border-brand-gold' : 'text-gray-400'
+              }`}
           >
             <UserPlus className="w-4 h-4" /> Create Account
           </button>
@@ -158,7 +154,7 @@ export default function Auth() {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Last Name</span>
                 <div className="relative">

@@ -356,6 +356,13 @@ export async function adminGetOrders(req: Request, res: Response, next: NextFunc
             email: true,
             phone: true
           }
+        },
+        items: {
+          include: {
+            product: {
+              include: { images: true }
+            }
+          }
         }
       },
       orderBy: { createdAt: 'desc' }

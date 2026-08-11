@@ -12,13 +12,6 @@ enum Role {
   ADMIN
 }
 
-enum Gender {
-  MEN
-  WOMEN
-  UNISEX
-  KIDS
-}
-
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -69,33 +62,40 @@ model Category {
 }
 
 model Product {
-  id           String         @id @default(uuid())
-  name         String
-  description  String
-  brand        String?
-  categoryId   String
-  category     Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  gender       Gender         @default(UNISEX)
-  price        Float
-  discount     Float          @default(0) // percentage discount
-  finalPrice   Float
-  stock        Int            @default(0)
-  sku          String         @unique
-  sizes        String[]       // e.g. ["S", "M", "L", "XL"]
-  colors       String[]       // e.g. ["Black", "White", "Navy"]
-  material     String?
-  featured     Boolean        @default(false)
-  trending     Boolean        @default(false)
-  newArrival   Boolean        @default(false)
-  bestSeller   Boolean        @default(false)
-  rating       Float          @default(0)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  images       ProductImage[]
-  orderItems   OrderItem[]
-  cartItems    Cart[]
-  wishlistItems Wishlist[]
-  reviews      Review[]
+  id               String         @id @default(uuid())
+  name             String
+  description      String
+  brand            String?
+  categoryId       String
+  category         Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  price            Float
+  discount         Float          @default(0) // percentage discount
+  finalPrice       Float
+  stock            Int            @default(0)
+  sku              String         @unique
+  sizes            String[]       // Blouse options e.g. ["Unstitched Blouse (0.8m)", "Stitched Readymade Blouse"]
+  colors           String[]       // Saree colors e.g. ["Red", "Royal Blue", "Golden"]
+  material         String?
+  fabric           String?        // e.g. "Pure Silk", "Georgette", "Organza"
+  workType         String?        // e.g. "Gota Patti", "Zardosi", "Printed"
+  occasion         String?        // e.g. "Bridal / Wedding", "Party Wear", "Festive & Pooja"
+  sareeStyle       String?        // e.g. "Banarasi", "Bandhani", "Kanjeevaram"
+  blouseIncluded   Boolean        @default(true)
+  blouseDetails    String?        // e.g. "Unstitched 0.8m Blouse Piece"
+  sareeLength      String?        // e.g. "5.5 Meters + 0.8 Meter Blouse"
+  careInstructions String?        // e.g. "Dry Clean Only"
+  featured         Boolean        @default(false)
+  trending         Boolean        @default(false)
+  newArrival       Boolean        @default(false)
+  bestSeller       Boolean        @default(false)
+  rating           Float          @default(0)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  images           ProductImage[]
+  orderItems       OrderItem[]
+  cartItems        Cart[]
+  wishlistItems    Wishlist[]
+  reviews          Review[]
 }
 
 model ProductImage {
@@ -236,7 +236,7 @@ model WhatsAppLog {
 model OtpVerification {
   id         String   @id @default(uuid())
   phone      String   @unique
-  otp        String
+  otp        String   @default("")
   expiresAt  DateTime
   lastSentAt DateTime @default(now())
   createdAt  DateTime @default(now())

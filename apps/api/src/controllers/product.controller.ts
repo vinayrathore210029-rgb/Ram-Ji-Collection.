@@ -3,7 +3,6 @@ import { prisma } from '../config/db';
 import { BadRequestError, NotFoundError } from '../utils/errors';
 import { z } from 'zod';
 import { uploadFile } from '../config/storage';
-import { Gender } from '@prisma/client';
 
 // Product validation schemas
 const productCreateSchema = z.object({
@@ -11,7 +10,6 @@ const productCreateSchema = z.object({
   description: z.string().min(1),
   brand: z.string().optional().nullable(),
   categoryId: z.string().uuid(),
-  gender: z.nativeEnum(Gender).optional().default(Gender.UNISEX),
   price: z.number().positive(),
   discount: z.number().nonnegative().max(100).optional().default(0),
   stock: z.number().int().nonnegative().optional().default(0),
@@ -19,6 +17,14 @@ const productCreateSchema = z.object({
   sizes: z.array(z.string()).optional().default([]),
   colors: z.array(z.string()).optional().default([]),
   material: z.string().optional().nullable(),
+  fabric: z.string().optional().nullable(),
+  workType: z.string().optional().nullable(),
+  occasion: z.string().optional().nullable(),
+  sareeStyle: z.string().optional().nullable(),
+  blouseIncluded: z.boolean().optional().default(true),
+  blouseDetails: z.string().optional().nullable(),
+  sareeLength: z.string().optional().nullable(),
+  careInstructions: z.string().optional().nullable(),
   featured: z.boolean().optional().default(false),
   trending: z.boolean().optional().default(false),
   newArrival: z.boolean().optional().default(false),
@@ -30,9 +36,12 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
     const {
       q,
       categoryId,
-      gender,
       color,
       size,
+      fabric,
+      workType,
+      occasion,
+      sareeStyle,
       minPrice,
       maxPrice,
       inStock,
@@ -53,7 +62,11 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
         { name: { contains: q as string, mode: 'insensitive' } },
         { description: { contains: q as string, mode: 'insensitive' } },
         { brand: { contains: q as string, mode: 'insensitive' } },
-        { sku: { contains: q as string, mode: 'insensitive' } }
+        { sku: { contains: q as string, mode: 'insensitive' } },
+        { fabric: { contains: q as string, mode: 'insensitive' } },
+        { workType: { contains: q as string, mode: 'insensitive' } },
+        { occasion: { contains: q as string, mode: 'insensitive' } },
+        { sareeStyle: { contains: q as string, mode: 'insensitive' } }
       ];
     }
 
@@ -63,6 +76,22 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
 
     if (gender) {
       whereClause.gender = gender as Gender;
+    }
+
+    if (fabric) {
+      whereClause.fabric = { equals: fabric as string, mode: 'insensitive' };
+    }
+
+    if (workType) {
+      whereClause.workType = { equals: workType as string, mode: 'insensitive' };
+    }
+
+    if (occasion) {
+      whereClause.occasion = { equals: occasion as string, mode: 'insensitive' };
+    }
+
+    if (sareeStyle) {
+      whereClause.sareeStyle = { equals: sareeStyle as string, mode: 'insensitive' };
     }
 
     if (color) {
@@ -202,13 +231,10 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
     // Calculate final price after discount
     const finalPrice = data.price - (data.price * data.discount) / 100;
 
-    // Handle files upload
+    // Handle files upload (unlimited images allowed)
     const uploadedImages: string[] = [];
     const files = req.files as Express.Multer.File[] | undefined;
     if (files && files.length > 0) {
-      if (files.length > 3) {
-        throw new BadRequestError('Maximum 3 images allowed per product');
-      }
       for (const file of files) {
         const url = await uploadFile(file.buffer, file.originalname, file.mimetype);
         uploadedImages.push(url);
@@ -290,14 +316,10 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
       finalPrice = basePrice - (basePrice * discountPercent) / 100;
     }
 
-    // Handle files upload (optional new images)
-    const existingImageCount = await prisma.productImage.count({ where: { productId: id } });
+    // Handle files upload (unlimited new images)
     const uploadedImages: string[] = [];
     const files = req.files as Express.Multer.File[] | undefined;
     if (files && files.length > 0) {
-      if (existingImageCount + files.length > 3) {
-        throw new BadRequestError(`Maximum 3 images allowed per product. Product currently has ${existingImageCount} images.`);
-      }
       for (const file of files) {
         const url = await uploadFile(file.buffer, file.originalname, file.mimetype);
         uploadedImages.push(url);

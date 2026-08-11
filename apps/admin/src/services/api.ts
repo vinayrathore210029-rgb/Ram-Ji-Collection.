@@ -33,11 +33,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Clear token and redirect to login
+    const isLoginEndpoint = error.config?.url?.includes('/auth/login');
+    if (error.response?.status === 401 && !isLoginEndpoint) {
+      // Clear token and redirect to login only if not authenticating
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

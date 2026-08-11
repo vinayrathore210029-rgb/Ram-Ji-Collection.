@@ -97,13 +97,10 @@ export async function sendOtp(req: Request, res: Response, next: NextFunction) {
 
     res.json({
       success: true,
-      message: 'OTP sent successfully',
+      message: 'OTP sent successfully to your mobile number!',
       data: {
         phone: formattedPhone,
-        cooldownSeconds: 120,
-        ...(process.env.NODE_ENV !== 'production' && (!whatsappToken || whatsappToken === 'your_whatsapp_access_token')
-          ? { devOtp: generatedOtp }
-          : {})
+        cooldownSeconds: 120
       }
     });
   } catch (error: any) {

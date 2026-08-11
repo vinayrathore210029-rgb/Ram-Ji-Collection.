@@ -83,6 +83,22 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
             <span className="text-[10px] text-gray-400 font-bold">({product.rating || 5.0})</span>
           </div>
+
+          {/* Saree Fabric / Work tags */}
+          {(product.fabric || product.workType) && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {product.fabric && (
+                <span className="text-[9px] bg-amber-50 text-amber-900 border border-amber-200 font-semibold px-2 py-0.5 rounded-full">
+                  {product.fabric}
+                </span>
+              )}
+              {product.workType && (
+                <span className="text-[9px] bg-rose-50 text-rose-800 border border-rose-200 font-semibold px-2 py-0.5 rounded-full">
+                  {product.workType}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Pricing tag */}

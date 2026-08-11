@@ -48,11 +48,22 @@ export default function Navbar() {
 
   return (
     <>
+      {/* Royal Indian Culture Top Announcement Bar */}
+      <div className="bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-amber-200 text-[11px] font-bold py-1.5 px-4 text-center border-b border-amber-500/30">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <span className="hidden sm:inline">🥻 Ram Ji Collection — Satwas Dewas M.P</span>
+          <span className="mx-auto sm:mx-0">✨ Handcrafted Royal Indian Sarees | Pure Silk & Zari Weaves</span>
+          <a href="https://api.whatsapp.com/send?phone=918815179854" target="_blank" rel="noreferrer" className="hidden md:inline hover:underline text-amber-300">
+            💬 WhatsApp: +91 8815179854
+          </a>
+        </div>
+      </div>
+
       <header 
-        className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${
+        className={`sticky top-0 left-0 w-full z-40 transition-all duration-300 ${
           isScrolled 
-            ? 'bg-white bg-opacity-95 shadow-md py-3 backdrop-blur-md border-b border-gray-100' 
-            : 'bg-transparent py-5'
+            ? 'bg-white bg-opacity-95 shadow-md py-3 backdrop-blur-md border-b border-amber-100' 
+            : 'bg-white py-4 border-b border-gray-100'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,48 +86,96 @@ export default function Navbar() {
               </span>
             </Link>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex space-x-8">
+            {/* Desktop Navigation Links (Pure Saree Store) */}
+            <nav className="hidden lg:flex items-center space-x-6">
               <Link 
                 to="/" 
-                className={`text-sm font-semibold tracking-wide uppercase transition-colors hover:text-brand-gold ${
+                className={`text-xs font-bold tracking-wider uppercase transition-colors hover:text-brand-gold ${
                   location.pathname === '/' ? 'text-brand-gold' : 'text-brand-charcoal'
                 }`}
               >
                 Home
               </Link>
+              
               <Link 
                 to="/shop" 
-                className={`text-sm font-semibold tracking-wide uppercase transition-colors hover:text-brand-gold ${
-                  location.pathname === '/shop' && !location.search.includes('gender') ? 'text-brand-gold' : 'text-brand-charcoal'
+                className={`text-xs font-bold tracking-wider uppercase transition-colors hover:text-brand-gold ${
+                  location.pathname === '/shop' && !location.search ? 'text-brand-gold' : 'text-brand-charcoal'
                 }`}
               >
-                Shop All
+                All Sarees
               </Link>
-              <Link 
-                to="/shop?gender=MEN" 
-                className={`text-sm font-semibold tracking-wide uppercase transition-colors hover:text-brand-gold ${
-                  location.search.includes('gender=MEN') ? 'text-brand-gold' : 'text-brand-charcoal'
-                }`}
-              >
-                Men
-              </Link>
-              <Link 
-                to="/shop?gender=WOMEN" 
-                className={`text-sm font-semibold tracking-wide uppercase transition-colors hover:text-brand-gold ${
-                  location.search.includes('gender=WOMEN') ? 'text-brand-gold' : 'text-brand-charcoal'
-                }`}
-              >
-                Women
-              </Link>
-              <Link 
-                to="/shop?gender=KIDS" 
-                className={`text-sm font-semibold tracking-wide uppercase transition-colors hover:text-brand-gold ${
-                  location.search.includes('gender=KIDS') ? 'text-brand-gold' : 'text-brand-charcoal'
-                }`}
-              >
-                Kids
-              </Link>
+
+              {/* Dropdown 1: By Style */}
+              <div className="relative group py-2">
+                <button 
+                  className={`text-xs font-bold tracking-wider uppercase flex items-center gap-1 transition-colors hover:text-brand-gold ${
+                    location.search.includes('sareeStyle') ? 'text-brand-gold' : 'text-brand-charcoal'
+                  }`}
+                >
+                  By Style <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
+                </button>
+                <div className="absolute top-full left-0 w-52 bg-white rounded-xl shadow-xl border border-amber-100 py-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform translate-y-2 group-hover:translate-y-0">
+                  <Link to="/shop?sareeStyle=Banarasi" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Banarasi Sarees</Link>
+                  <Link to="/shop?sareeStyle=Bandhani" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Bandhani Sarees</Link>
+                  <Link to="/shop?sareeStyle=Organza" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Organza Sarees</Link>
+                  <Link to="/shop?sareeStyle=Kanjeevaram" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Kanjeevaram Silk</Link>
+                  <Link to="/shop?sareeStyle=Leheriya" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Leheriya Sarees</Link>
+                  <Link to="/shop?sareeStyle=Bollywood" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Bollywood / Designer</Link>
+                </div>
+              </div>
+
+              {/* Dropdown 2: By Fabric */}
+              <div className="relative group py-2">
+                <button 
+                  className={`text-xs font-bold tracking-wider uppercase flex items-center gap-1 transition-colors hover:text-brand-gold ${
+                    location.search.includes('fabric') ? 'text-brand-gold' : 'text-brand-charcoal'
+                  }`}
+                >
+                  By Fabric <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
+                </button>
+                <div className="absolute top-full left-0 w-52 bg-white rounded-xl shadow-xl border border-amber-100 py-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform translate-y-2 group-hover:translate-y-0">
+                  <Link to="/shop?fabric=Pure+Silk" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Pure Silk</Link>
+                  <Link to="/shop?fabric=Georgette" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Georgette</Link>
+                  <Link to="/shop?fabric=Chiffon" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Chiffon</Link>
+                  <Link to="/shop?fabric=Organza" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Organza Sheer</Link>
+                  <Link to="/shop?fabric=Gaji+Silk" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Gaji Silk</Link>
+                </div>
+              </div>
+
+              {/* Dropdown 3: By Occasion */}
+              <div className="relative group py-2">
+                <button 
+                  className={`text-xs font-bold tracking-wider uppercase flex items-center gap-1 transition-colors hover:text-brand-gold ${
+                    location.search.includes('occasion') ? 'text-brand-gold' : 'text-brand-charcoal'
+                  }`}
+                >
+                  By Occasion <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
+                </button>
+                <div className="absolute top-full left-0 w-52 bg-white rounded-xl shadow-xl border border-amber-100 py-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform translate-y-2 group-hover:translate-y-0">
+                  <Link to="/shop?occasion=Bridal" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Bridal / Wedding</Link>
+                  <Link to="/shop?occasion=Party+Wear" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Party Wear</Link>
+                  <Link to="/shop?occasion=Haldi" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Haldi / Mehendi</Link>
+                  <Link to="/shop?occasion=Festive" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Festive & Pooja</Link>
+                </div>
+              </div>
+
+              {/* Dropdown 4: By Work */}
+              <div className="relative group py-2">
+                <button 
+                  className={`text-xs font-bold tracking-wider uppercase flex items-center gap-1 transition-colors hover:text-brand-gold ${
+                    location.search.includes('workType') ? 'text-brand-gold' : 'text-brand-charcoal'
+                  }`}
+                >
+                  By Craft <ChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
+                </button>
+                <div className="absolute top-full left-0 w-52 bg-white rounded-xl shadow-xl border border-amber-100 py-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform translate-y-2 group-hover:translate-y-0">
+                  <Link to="/shop?workType=Gota+Patti" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Gota Patti Work</Link>
+                  <Link to="/shop?workType=Zardosi" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Zardosi Weave</Link>
+                  <Link to="/shop?workType=Mirror+Work" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Mirror Work</Link>
+                  <Link to="/shop?workType=Sequins" className="block px-4 py-2 text-xs font-medium text-gray-700 hover:bg-amber-50 hover:text-amber-900">Sequins Work</Link>
+                </div>
+              </div>
             </nav>
 
             {/* Desktop / Action Buttons */}
@@ -128,7 +187,7 @@ export default function Navbar() {
                   <form onSubmit={handleSearchSubmit} className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center bg-gray-100 rounded-full px-3 py-1.5 w-60 sm:w-72">
                     <input 
                       type="text" 
-                      placeholder="Search collection..."
+                      placeholder="Search sarees by fabric, work..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="bg-transparent border-none outline-none text-xs w-full pl-1.5"
@@ -243,20 +302,31 @@ export default function Navbar() {
         {mobileMenuOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setMobileMenuOpen(false)} />
-            <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-white p-6 shadow-xl flex flex-col justify-between">
+            <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-white p-6 shadow-xl flex flex-col justify-between overflow-y-auto">
               <div>
-                <div className="flex items-center justify-between mb-8">
-                  <span className="text-lg font-bold tracking-widest text-brand-charcoal">MENU</span>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-lg font-bold tracking-widest text-brand-charcoal">SAREE STORE</span>
                   <button onClick={() => setMobileMenuOpen(false)} className="text-gray-400 p-1">
                     <X className="w-6 h-6" />
                   </button>
                 </div>
                 <nav className="flex flex-col space-y-4">
                   <Link to="/" className="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">Home</Link>
-                  <Link to="/shop" className="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">Shop All</Link>
-                  <Link to="/shop?gender=MEN" className="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">Men</Link>
-                  <Link to="/shop?gender=WOMEN" className="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">Women</Link>
-                  <Link to="/shop?gender=KIDS" className="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">Kids</Link>
+                  <Link to="/shop" className="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">All Sarees</Link>
+                  
+                  {/* Saree Categories Accordion */}
+                  <div className="border-b border-gray-100 pb-3 space-y-2">
+                    <span className="text-sm font-extrabold text-amber-900 uppercase tracking-wider block">Shop By Style</span>
+                    <div className="pl-3 space-y-1 text-xs text-gray-600">
+                      <Link to="/shop?sareeStyle=Banarasi" className="block py-1">Banarasi Sarees</Link>
+                      <Link to="/shop?sareeStyle=Bandhani" className="block py-1">Bandhani Sarees</Link>
+                      <Link to="/shop?sareeStyle=Organza" className="block py-1">Organza Sarees</Link>
+                      <Link to="/shop?sareeStyle=Kanjeevaram" className="block py-1">Kanjeevaram Silk</Link>
+                      <Link to="/shop?sareeStyle=Leheriya" className="block py-1">Leheriya Sarees</Link>
+                      <Link to="/shop?fabric=Pure+Silk" className="block py-1">Pure Silk</Link>
+                      <Link to="/shop?occasion=Bridal" className="block py-1 font-bold text-amber-800">Bridal Specials</Link>
+                    </div>
+                  </div>
                 </nav>
               </div>
 

@@ -34,10 +34,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         const response = await api.post('/auth/login', credentials);
         const { token, refreshToken, user } = response.data.data;
-        
+
         localStorage.setItem('token', token);
         localStorage.setItem('refreshToken', refreshToken);
-        
+
         set({ token, user, loading: false });
       } catch (error: any) {
         set({ loading: false });
@@ -50,10 +50,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         const response = await api.post('/auth/register', data);
         const { token, refreshToken, user } = response.data.data;
-        
+
         localStorage.setItem('token', token);
         localStorage.setItem('refreshToken', refreshToken);
-        
+
         set({ token, user, loading: false });
       } catch (error: any) {
         set({ loading: false });
@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     checkAuth: async () => {
       const token = localStorage.getItem('token');
       if (!token) return;
-      
+
       set({ loading: true });
       try {
         const response = await api.get('/auth/me');

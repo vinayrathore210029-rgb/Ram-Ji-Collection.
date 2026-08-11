@@ -18,7 +18,7 @@ const registerSchema = z.object({
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().transform((val) => val.toLowerCase().trim()),
   password: z.string()
 });
 
@@ -91,8 +91,13 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const data = loginSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({
-      where: { email: data.email }
+    const user = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: data.email,
+          mode: 'insensitive'
+        }
+      }
     });
 
     if (!user) {

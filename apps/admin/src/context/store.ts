@@ -32,7 +32,8 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
       set({ token, user, loading: false });
     } catch (error: any) {
       set({ loading: false });
-      throw error.message || error.response?.data?.message || 'Login failed';
+      const message = error.response?.data?.message || error.message || 'Login failed';
+      throw message;
     }
   },
 

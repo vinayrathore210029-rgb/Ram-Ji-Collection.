@@ -237,21 +237,53 @@ export default function ProductDetail() {
             <p className="text-xs text-gray-500 leading-relaxed font-medium">{product.description}</p>
           </div>
 
-          {/* Attributes */}
-          <div className="grid grid-cols-2 gap-4 text-xs font-medium border border-gray-100 p-4 rounded-xl bg-gray-50">
+          {/* Saree Specifications Grid */}
+          <div className="grid grid-cols-2 gap-3 text-xs font-medium border border-amber-200/70 p-4 rounded-2xl bg-amber-50/50">
+            {product.sareeStyle && (
+              <div>
+                <span className="text-gray-400 block text-[10px] uppercase font-extrabold tracking-wider">Style</span> 
+                <span className="text-amber-900 font-extrabold">{product.sareeStyle}</span>
+              </div>
+            )}
+            {product.fabric && (
+              <div>
+                <span className="text-gray-400 block text-[10px] uppercase font-extrabold tracking-wider">Fabric</span> 
+                <span className="text-amber-900 font-extrabold">{product.fabric}</span>
+              </div>
+            )}
+            {product.workType && (
+              <div>
+                <span className="text-gray-400 block text-[10px] uppercase font-extrabold tracking-wider">Work / Craft</span> 
+                <span className="text-rose-900 font-extrabold">{product.workType}</span>
+              </div>
+            )}
+            {product.occasion && (
+              <div>
+                <span className="text-gray-400 block text-[10px] uppercase font-extrabold tracking-wider">Occasion</span> 
+                <span className="text-brand-charcoal font-bold">{product.occasion}</span>
+              </div>
+            )}
+            {product.sareeLength && (
+              <div>
+                <span className="text-gray-400 block text-[10px] uppercase font-extrabold tracking-wider">Saree Length</span> 
+                <span className="text-brand-charcoal font-bold">{product.sareeLength}</span>
+              </div>
+            )}
+            {product.blouseDetails && (
+              <div>
+                <span className="text-gray-400 block text-[10px] uppercase font-extrabold tracking-wider">Blouse Piece</span> 
+                <span className="text-brand-charcoal font-bold">{product.blouseDetails}</span>
+              </div>
+            )}
+            {product.careInstructions && (
+              <div>
+                <span className="text-gray-400 block text-[10px] uppercase font-extrabold tracking-wider">Care Instructions</span> 
+                <span className="text-brand-charcoal font-bold">{product.careInstructions}</span>
+              </div>
+            )}
             <div>
-              <span className="text-gray-400">Gender:</span> <span className="text-brand-charcoal font-semibold">{product.gender.toLowerCase()}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">Material:</span> <span className="text-brand-charcoal font-semibold">{product.material || 'Cotton blend'}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">SKU:</span> <span className="text-brand-charcoal font-semibold">{product.sku}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">Availability:</span> <span className={`font-semibold ${product.stock > 0 ? 'text-green-600' : 'text-brand-red'}`}>
-                {product.stock > 0 ? `In Stock (${product.stock} left)` : 'Out of Stock'}
-              </span>
+              <span className="text-gray-400 block text-[10px] uppercase font-extrabold tracking-wider">SKU</span> 
+              <span className="text-brand-charcoal font-bold">{product.sku}</span>
             </div>
           </div>
 
@@ -260,13 +292,13 @@ export default function ProductDetail() {
             <div className="space-y-4">
               {/* Sizes */}
               <div className="space-y-1.5">
-                <span className="text-xs font-extrabold uppercase text-gray-400 tracking-wider">Select Size</span>
-                <div className="flex gap-2">
+                <span className="text-xs font-extrabold uppercase text-gray-400 tracking-wider">Select Option / Stitching</span>
+                <div className="flex flex-wrap gap-2">
                   {product.sizes.map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`w-10 h-10 border font-bold text-xs rounded-xl flex items-center justify-center transition-all ${
+                      className={`px-3 py-1.5 border font-bold text-xs rounded-xl flex items-center justify-center transition-all ${
                         selectedSize === size
                           ? 'bg-brand-charcoal text-white border-brand-charcoal shadow-sm'
                           : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
@@ -281,7 +313,7 @@ export default function ProductDetail() {
               {/* Colors */}
               <div className="space-y-1.5">
                 <span className="text-xs font-extrabold uppercase text-gray-400 tracking-wider">Select Color</span>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {product.colors.map((color) => (
                     <button
                       key={color}
@@ -340,6 +372,16 @@ export default function ProductDetail() {
                   <Zap className="w-4 h-4 fill-white" />
                   {buyingNow ? 'Redirecting...' : 'Buy Now'}
                 </button>
+
+                {/* WHATSAPP ORDER BUTTON */}
+                <a
+                  href={`https://api.whatsapp.com/send?phone=918815179854&text=${encodeURIComponent(`Hello Ram Ji Collection! I am interested in buying: ${product.name} (SKU: ${product.sku}, Price: ₹${product.finalPrice}). Please share availability.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-3.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-bold text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2 transition-all"
+                >
+                  WhatsApp Buy
+                </a>
 
                 {/* WISHLIST */}
                 <button

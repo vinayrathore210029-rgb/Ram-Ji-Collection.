@@ -19,23 +19,28 @@ export interface Category {
   createdAt: Date;
 }
 
-export type ProductGender = 'MEN' | 'WOMEN' | 'UNISEX' | 'KIDS';
-
 export interface Product {
   id: string;
   name: string;
   description: string;
-  brand: string;
+  brand: string | null;
   categoryId: string;
-  gender: ProductGender;
   price: number;
   discount: number; // In percentage, e.g., 10 for 10%
   finalPrice: number;
   stock: number;
   sku: string;
-  sizes: string[]; // E.g., ['S', 'M', 'L', 'XL']
-  colors: string[]; // E.g., ['Red', 'Black', 'Blue']
-  material: string | null;
+  sizes: string[]; // Blouse/Stitching options e.g. ['Unstitched Blouse (0.8m)', 'With Matching Blouse']
+  colors: string[]; // Saree colors e.g. ['Red', 'Maroon', 'Golden']
+  material?: string | null;
+  fabric?: string | null;
+  workType?: string | null;
+  occasion?: string | null;
+  sareeStyle?: string | null;
+  blouseIncluded?: boolean;
+  blouseDetails?: string | null;
+  sareeLength?: string | null;
+  careInstructions?: string | null;
   featured: boolean;
   trending: boolean;
   newArrival: boolean;
