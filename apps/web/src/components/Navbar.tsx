@@ -69,17 +69,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             
-            {/* Mobile Menu Icon */}
-            <div className="flex lg:hidden">
-              <button 
-                onClick={() => setMobileMenuOpen(true)}
-                className="text-brand-charcoal p-1 hover:text-brand-gold transition-colors"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Logo Brand */}
+            {/* Logo Brand (All the way on the Left!) */}
             <Link to="/" className="flex items-center gap-2 select-none flex-shrink-0">
               <img 
                 src="/logo.png" 
@@ -297,6 +287,17 @@ export default function Navbar() {
                     <UserIcon className="w-5 h-5" />
                   </Link>
                 )}
+              </div>
+
+              {/* Mobile Menu Icon (Extreme Right on Mobile!) */}
+              <div className="flex lg:hidden">
+                <button 
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="text-brand-charcoal p-1.5 hover:text-brand-gold transition-colors"
+                  title="Open Navigation Menu"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
               </div>
 
             </div>
