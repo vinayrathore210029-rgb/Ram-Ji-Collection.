@@ -80,8 +80,13 @@ export default function Navbar() {
             </div>
 
             {/* Logo Brand */}
-            <Link to="/" className="flex items-center gap-1.5 select-none">
-              <span className="text-xl sm:text-2xl font-extrabold tracking-wider text-brand-charcoal font-sans uppercase">
+            <Link to="/" className="flex items-center gap-2 select-none flex-shrink-0">
+              <img 
+                src="/logo.png" 
+                alt="Ram Ji Collection Logo" 
+                className="w-7 h-7 sm:w-9 sm:h-9 object-contain rounded-full border border-amber-300/50 shadow-sm" 
+              />
+              <span className="text-xs sm:text-base md:text-xl font-extrabold tracking-wider text-brand-charcoal font-sans uppercase whitespace-nowrap">
                 RAM JI <span className="text-brand-gold font-light">COLLECTION</span>
               </span>
             </Link>

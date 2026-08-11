@@ -9,10 +9,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           
           {/* Logo & About */}
-          <div className="flex flex-col gap-4">
-            <span className="text-xl font-bold tracking-wider uppercase text-brand-gold">
-              RAM JI COLLECTION
-            </span>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Ram Ji Collection Logo" className="w-8 h-8 object-contain rounded-full border border-amber-400/40 shadow-sm" />
+              <span className="text-base sm:text-lg font-extrabold tracking-wider uppercase text-amber-400">
+                RAM JI COLLECTION
+              </span>
+            </div>
             <p className="text-xs text-gray-400 leading-relaxed">
               Satwas Dewas M.P — Handcrafted Royal Sarees Boutique. Pure Banarasi, Jaipuri Bandhej, Kanjeevaram & Organza Sarees.
             </p>
